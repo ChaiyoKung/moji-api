@@ -1,98 +1,77 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## MongoDB Collections Schema
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### 1. users
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```ts
+{
+  _id: ObjectId,
+  email: String,                   // อีเมล (unique)
+  displayName: String,             // ชื่อที่แสดง
+  avatarUrl: String,               // ลิงก์รูปโปรไฟล์ (optional)
+  providers: [                     // รายการ OAuth2 providers ที่เชื่อมต่อ
+    {
+      provider: String,            // เช่น "google", "facebook"
+      providerId: String,          // user id จาก provider นั้น
+      linkedAt: Date               // วันที่เชื่อมต่อ provider นี้
+    }
+  ],
+  createdAt: Date,                 // วันที่สมัคร
+  updatedAt: Date,                 // วันที่แก้ไขล่าสุด
+  settings: {                      // การตั้งค่าส่วนตัว (optional)
+    currency: String,              // สกุลเงินหลัก เช่น "THB"
+    language: String               // ภาษา เช่น "th"
+  }
+}
 ```
 
-## Compile and run the project
+### 2. accounts
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```ts
+{
+  _id: ObjectId,
+  userId: ObjectId,            // อ้างอิงไปยัง users._id
+  name: String,                // ชื่อบัญชี เช่น "กระเป๋าสตางค์", "บัญชีธนาคาร"
+  type: String,                // ประเภทบัญชี เช่น "cash", "bank", "credit"
+  balance: Number,             // ยอดเงินปัจจุบัน (optional, สำหรับแสดงผล)
+  currency: String,            // สกุลเงิน เช่น "THB"
+  icon: String,                // ไอคอนหรือสัญลักษณ์บัญชี (optional)
+  createdAt: Date,             // วันที่สร้างบัญชี
+  updatedAt: Date              // วันที่แก้ไขล่าสุด
+}
 ```
 
-## Run tests
+### 3. categories
 
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+```ts
+{
+  _id: ObjectId,
+  userId: ObjectId,            // อ้างอิงไปยัง users._id (null ถ้าเป็น global category)
+  name: String,                // ชื่อหมวดหมู่ เช่น "อาหาร", "เดินทาง"
+  type: String,                // "income" หรือ "expense"
+  icon: String,                // ไอคอนหมวดหมู่ (optional)
+  color: String,               // สีประจำหมวดหมู่ (optional)
+  parentId: ObjectId,          // อ้างอิงหมวดหมู่หลัก (optional, สำหรับหมวดหมู่ย่อย)
+  createdAt: Date,             // วันที่สร้าง
+  updatedAt: Date              // วันที่แก้ไขล่าสุด
+}
 ```
 
-## Deployment
+### 4. transactions
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+```ts
+{
+  _id: ObjectId,
+  userId: ObjectId,            // อ้างอิงไปยัง users._id
+  accountId: ObjectId,         // อ้างอิงไปยัง accounts._id
+  categoryId: ObjectId,        // อ้างอิงไปยัง categories._id
+  type: String,                // "income" หรือ "expense"
+  amount: Number,              // จำนวนเงิน
+  currency: String,            // สกุลเงิน เช่น "THB"
+  note: String,                // หมายเหตุ (optional)
+  date: Date,                  // วันที่ทำรายการ
+  createdAt: Date,             // วันที่สร้างรายการ
+  updatedAt: Date              // วันที่แก้ไขล่าสุด
+}
 ```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
