@@ -26,6 +26,17 @@ export class User {
     providerId: string;
     linkedAt: Date;
   }[];
+
+  @Prop({
+    type: {
+      currency: { type: String },
+      language: { type: String },
+    },
+  })
+  settings?: {
+    currency?: string;
+    language?: string;
+  };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

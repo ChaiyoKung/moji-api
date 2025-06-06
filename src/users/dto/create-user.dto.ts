@@ -20,6 +20,16 @@ class ProviderDto {
   linkedAt: Date;
 }
 
+class SettingsDto {
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
+}
+
 export class CreateUserDto {
   @IsEmail()
   email: string;
@@ -36,4 +46,9 @@ export class CreateUserDto {
   @Type(() => ProviderDto)
   @IsOptional()
   providers?: ProviderDto[];
+
+  @ValidateNested()
+  @Type(() => SettingsDto)
+  @IsOptional()
+  settings?: SettingsDto;
 }
