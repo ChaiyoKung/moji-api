@@ -3,6 +3,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
+import { AccountsModule } from "./accounts/accounts.module";
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { UsersModule } from "./users/users.module";
         "mongodb://root:example@localhost:27017/moji?authSource=admin"
     ),
     UsersModule,
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
