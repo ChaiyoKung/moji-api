@@ -1,4 +1,6 @@
-# API
+# Moji API
+
+The backend service for Moji, a minimal and friendly expense tracker app to help you stay mindful with your money — with a touch of charm.
 
 ## MongoDB Collections Schema
 
