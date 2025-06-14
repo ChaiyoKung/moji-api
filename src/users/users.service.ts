@@ -9,6 +9,10 @@ import * as bcrypt from "bcrypt";
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
+  async findOne(filter: Partial<User>): Promise<User | null> {
+    return this.userModel.findOne(filter).exec();
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.userModel.findOne({
       email: createUserDto.email,
