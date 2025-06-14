@@ -14,4 +14,10 @@ export class CategoriesService {
     const createdCategory = new this.categoryModel(createCategoryDto);
     return createdCategory.save();
   }
+
+  async findByUserId(userId: string): Promise<Category[]> {
+    return this.categoryModel
+      .find({ $or: [{ userId: null }, { userId }] })
+      .exec();
+  }
 }
