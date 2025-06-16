@@ -14,4 +14,8 @@ export class AccountsService {
     const createdAccount = new this.accountModel(createAccountDto);
     return createdAccount.save();
   }
+
+  async findAllByUserId(userId: string): Promise<Account[]> {
+    return this.accountModel.find({ userId }).exec();
+  }
 }

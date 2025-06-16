@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Request,
+} from "@nestjs/common";
 import { AccountsService } from "./accounts.service";
 import { CreateAccountDto } from "./dto/create-account.dto";
 import { Account } from "./schemas/account.schema";
@@ -12,5 +19,11 @@ export class AccountsController {
   @Post()
   async create(@Body() createAccountDto: CreateAccountDto): Promise<Account> {
     return this.accountsService.create(createAccountDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getAll(@Request() req) {
+    return this.accountsService.findAllByUserId(req.user.userId);
   }
 }
