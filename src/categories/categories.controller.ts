@@ -22,6 +22,12 @@ export class CategoriesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("income")
+  async getIncome(@Request() req) {
+    return this.categoriesService.findIncomeForUser(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @Body() createCategoryDto: CreateCategoryDto
