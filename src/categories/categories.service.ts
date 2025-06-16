@@ -26,4 +26,10 @@ export class CategoriesService {
       .find({ $or: [{ userId: null }, { userId }], type: "income" })
       .exec();
   }
+
+  async findExpenseForUser(userId: string): Promise<Category[]> {
+    return this.categoryModel
+      .find({ $or: [{ userId: null }, { userId }], type: "expense" })
+      .exec();
+  }
 }
