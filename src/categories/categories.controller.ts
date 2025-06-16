@@ -21,6 +21,7 @@ export class CategoriesController {
     return this.categoriesService.findByUserId(req.user.userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @Body() createCategoryDto: CreateCategoryDto
