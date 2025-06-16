@@ -16,9 +16,9 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get("me")
-  async getByMe(@Request() req) {
-    return this.categoriesService.findByUserId(req.user.userId);
+  @Get()
+  async getAll(@Request() req) {
+    return this.categoriesService.findAllForUser(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)

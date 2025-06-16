@@ -15,7 +15,7 @@ export class CategoriesService {
     return createdCategory.save();
   }
 
-  async findByUserId(userId: string): Promise<Category[]> {
+  async findAllForUser(userId: string): Promise<Category[]> {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }] })
       .exec();
