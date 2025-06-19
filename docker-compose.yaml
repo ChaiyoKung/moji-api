@@ -7,6 +7,35 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  mongo-init:
+    image: mongo:8
+    container_name: mongo-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: >
+      mongosh --host mongodb:27017 --eval "
+        try {
+          rs.initiate({
+            _id: 'rs0',
+            members: [{_id: 0, host: 'localhost:27017'}]
+          });
+          print('Replica set initialized');
+        } catch(e) {
+          if (e.code === 23) {
+            print('Replica set already initialized');
+          } else {
+            print('Error:', e);
+          }
+        }
+      "
 
 volumes:
   mongo-data:
