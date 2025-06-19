@@ -10,11 +10,8 @@ export class LoggerMiddleware implements NestMiddleware {
     res.on("finish", () => {
       const ms = Date.now() - start;
       const { statusCode } = res;
-      // Simple log format: ISO_TIMESTAMP METHOD URL STATUS (ms ms)
-      const timestamp = new Date().toISOString();
-      console.log(
-        `${timestamp} ${method} ${originalUrl} ${statusCode} (${ms}ms)`
-      );
+      // Simple log format: [METHOD] URL STATUS (ms ms)
+      console.log(`[${method}] ${originalUrl} ${statusCode} (${ms}ms)`);
     });
 
     next();
