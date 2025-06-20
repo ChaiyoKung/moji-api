@@ -67,13 +67,7 @@ export class AnalyticsService {
       );
     }
 
-    const summaryResult = parsedResult[0];
-
-    return {
-      type,
-      date,
-      total: summaryResult.total,
-      count: summaryResult.count,
-    };
+    const { total, count } = parsedResult[0];
+    return { type, date, total, count };
   }
 }
