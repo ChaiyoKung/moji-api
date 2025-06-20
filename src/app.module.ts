@@ -9,6 +9,7 @@ import { CategoriesModule } from "./categories/categories.module";
 import { TransactionsModule } from "./transactions/transactions.module";
 import { AuthModule } from "./auth/auth.module";
 import { LoggerMiddleware } from "./logger.middleware";
+import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { LoggerMiddleware } from "./logger.middleware";
     CategoriesModule,
     TransactionsModule,
     AuthModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

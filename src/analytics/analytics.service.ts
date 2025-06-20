@@ -1,0 +1,76 @@
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Transaction } from "../transactions/schemas/transaction.schema";
+import { z } from "zod/v4";
+
+@Injectable()
+export class AnalyticsService {
+  constructor(
+    @InjectModel(Transaction.name)
+    private readonly transactionModel: Model<Transaction>
+  ) {}
+
+  async getExpenseSummaryByDate(
+    userId: string,
+    type: "income" | "expense",
+    /**
+     * Date is in 'YYYY-MM-DD' format
+     */
+    date: string
+  ) {
+    const result = await this.transactionModel.aggregate([
+      {
+        $match: {
+          userId,
+          type,
+          date: new Date(date),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          count: 1,
+        },
+      },
+    ]);
+
+    const parsedResult = z
+      .array(
+        z.object({
+          total: z.number(),
+          count: z.number(),
+        })
+      )
+      .parse(result);
+
+    if (parsedResult.length === 0) {
+      return new NotFoundException(
+        `No transactions found for type "${type}" on date "${date}".`
+      );
+    }
+
+    if (parsedResult.length > 1) {
+      throw new NotFoundException(
+        "Unexpected result: more than one summary found."
+      );
+    }
+
+    const summaryResult = parsedResult[0];
+
+    return {
+      type,
+      date,
+      total: summaryResult.total,
+      count: summaryResult.count,
+    };
+  }
+}
