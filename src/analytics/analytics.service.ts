@@ -68,7 +68,6 @@ export class AnalyticsService {
     }
 
     const summaryResult = parsedResult[0];
-    console.debug("Summary Result:", summaryResult);
 
     return {
       type,
