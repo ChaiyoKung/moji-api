@@ -53,9 +53,12 @@ export class AnalyticsService {
       .parse(result);
 
     if (parsedResult.length === 0) {
-      throw new NotFoundException(
-        `No transactions found for type "${type}" on date "${date}".`
-      );
+      return {
+        type,
+        date,
+        total: 0,
+        count: 0,
+      };
     }
 
     if (parsedResult.length > 1) {
@@ -65,6 +68,7 @@ export class AnalyticsService {
     }
 
     const summaryResult = parsedResult[0];
+    console.debug("Summary Result:", summaryResult);
 
     return {
       type,
