@@ -61,9 +61,7 @@ export class TransactionsService {
     }
   }
 
-  async findAll(
-    query: FindTransactionsQueryWithUserId
-  ): Promise<Transaction[]> {
+  async findAll(query: FindTransactionsQueryWithUserId) {
     const { startDate, endDate, userId } = query;
 
     const filter: RootFilterQuery<Transaction> = { userId };
@@ -78,6 +76,7 @@ export class TransactionsService {
     return this.transactionModel
       .find(filter)
       .sort({ date: -1, createdAt: -1 })
+      .populate("categoryId")
       .exec();
   }
 }
