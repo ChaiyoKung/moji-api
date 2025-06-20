@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Request,
-  UseGuards,
-} from "@nestjs/common";
+import { Controller, Post, Body, Get, UseGuards, Req } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { Category } from "./schemas/category.schema";
@@ -17,19 +10,19 @@ export class CategoriesController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getAll(@Request() req) {
+  async getAll(@Req() req) {
     return this.categoriesService.findAllForUser(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("income")
-  async getIncome(@Request() req) {
+  async getIncome(@Req() req) {
     return this.categoriesService.findIncomeForUser(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("expense")
-  async getExpense(@Request() req) {
+  async getExpense(@Req() req) {
     return this.categoriesService.findExpenseForUser(req.user.userId);
   }
 

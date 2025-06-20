@@ -5,7 +5,7 @@ import {
   UseGuards,
   Get,
   Query,
-  Request,
+  Req,
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
@@ -19,7 +19,7 @@ export class TransactionsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query() query: FindTransactionsQueryDto, @Request() req) {
+  async findAll(@Query() query: FindTransactionsQueryDto, @Req() req) {
     return this.transactionsService.findAll({
       ...query,
       userId: req.user.userId,
