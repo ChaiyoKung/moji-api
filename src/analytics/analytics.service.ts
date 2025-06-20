@@ -53,7 +53,7 @@ export class AnalyticsService {
       .parse(result);
 
     if (parsedResult.length === 0) {
-      return new NotFoundException(
+      throw new NotFoundException(
         `No transactions found for type "${type}" on date "${date}".`
       );
     }
