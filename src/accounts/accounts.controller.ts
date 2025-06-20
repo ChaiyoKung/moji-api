@@ -3,6 +3,7 @@ import { AccountsService } from "./accounts.service";
 import { CreateAccountDto } from "./dto/create-account.dto";
 import { Account } from "./schemas/account.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { Request } from "express";
 
 @Controller("accounts")
 export class AccountsController {
@@ -16,7 +17,7 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getAll(@Req() req) {
+  async getAll(@Req() req: Request) {
     return this.accountsService.findAllByUserId(req.user.userId);
   }
 }

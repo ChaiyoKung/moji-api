@@ -12,6 +12,7 @@ import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { Transaction } from "./schemas/transaction.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
+import { Request } from "express";
 
 @Controller("transactions")
 export class TransactionsController {
@@ -19,7 +20,7 @@ export class TransactionsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query() query: FindTransactionsQueryDto, @Req() req) {
+  async findAll(@Query() query: FindTransactionsQueryDto, @Req() req: Request) {
     return this.transactionsService.findAll({
       ...query,
       userId: req.user.userId,
