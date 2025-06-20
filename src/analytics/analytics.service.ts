@@ -53,12 +53,7 @@ export class AnalyticsService {
       .parse(result);
 
     if (parsedResult.length === 0) {
-      return {
-        type,
-        date,
-        total: 0,
-        count: 0,
-      };
+      return { type, date, total: 0, count: 0 };
     }
 
     if (parsedResult.length > 1) {
