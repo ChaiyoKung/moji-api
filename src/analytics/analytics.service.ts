@@ -11,7 +11,7 @@ export class AnalyticsService {
     private readonly transactionModel: Model<Transaction>
   ) {}
 
-  async getExpenseSummaryByDate(
+  async getSummary(
     userId: string,
     type: "income" | "expense",
     /**

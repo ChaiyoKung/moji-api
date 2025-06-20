@@ -14,10 +14,6 @@ export class AnalyticsController {
     @Query("type") type: "income" | "expense",
     @Query("date") date: string
   ) {
-    return this.analyticsService.getExpenseSummaryByDate(
-      req.user.userId,
-      type,
-      date
-    );
+    return this.analyticsService.getSummary(req.user.userId, type, date);
   }
 }
