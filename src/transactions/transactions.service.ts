@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, QuerySelector, RootFilterQuery } from "mongoose";
+import {
+  FilterQuery,
+  Model,
+  PipelineStage,
+  QuerySelector,
+  RootFilterQuery,
+} from "mongoose";
 import { Transaction } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
@@ -59,6 +65,40 @@ export class TransactionsService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async getIdsByRange(query: FindTransactionsQueryWithUserId) {
+    const { startDate, endDate, userId } = query;
+
+    const match: FilterQuery<Transaction> = { userId };
+
+    if (startDate || endDate) {
+      const dateFilter: QuerySelector<Date> = {};
+      if (startDate) dateFilter.$gte = new Date(startDate);
+      if (endDate) dateFilter.$lte = new Date(endDate);
+      match.date = dateFilter;
+    }
+
+    const pipeline: PipelineStage[] = [
+      { $match: match },
+      {
+        $project: {
+          formattedDate: {
+            $dateToString: { format: "%Y-%m-%d", date: "$date" },
+          },
+          _id: 1,
+        },
+      },
+      {
+        $group: {
+          _id: "$formattedDate",
+          ids: { $push: { $toString: "$_id" } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ];
+
+    return this.transactionModel.aggregate(pipeline).exec();
   }
 
   async findAll(query: FindTransactionsQueryWithUserId) {

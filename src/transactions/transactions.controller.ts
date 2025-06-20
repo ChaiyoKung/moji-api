@@ -19,6 +19,20 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Get("ids-by-date")
+  async getIdsByRange(
+    @Query("startDate") startDate: string,
+    @Query("endDate") endDate: string,
+    @Req() req: Request
+  ) {
+    return this.transactionsService.getIdsByRange({
+      startDate,
+      endDate,
+      userId: req.user.userId,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Query() query: FindTransactionsQueryDto, @Req() req: Request) {
     return this.transactionsService.findAll({
