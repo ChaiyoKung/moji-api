@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Param,
+} from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -15,15 +23,12 @@ export class CategoriesController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("income")
-  async getIncome(@Req() req: Request) {
-    return this.categoriesService.findByTypeForUser(req.user.userId, "income");
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("expense")
-  async getExpense(@Req() req: Request) {
-    return this.categoriesService.findByTypeForUser(req.user.userId, "expense");
+  @Get(":type")
+  async getByType(
+    @Param("type") type: "income" | "expense",
+    @Req() req: Request
+  ) {
+    return this.categoriesService.findByTypeForUser(req.user.userId, type);
   }
 
   @UseGuards(JwtAuthGuard)
