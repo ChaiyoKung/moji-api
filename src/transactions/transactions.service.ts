@@ -12,6 +12,7 @@ import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Account } from "../accounts/schemas/account.schema";
 import { CategoryDocument } from "../categories/schemas/category.schema";
+import dayjs from "dayjs";
 
 export interface FindTransactionsQueryWithUserId
   extends FindTransactionsQueryDto {
@@ -29,10 +30,15 @@ export class TransactionsService {
     const session = await this.transactionModel.db.startSession();
     session.startTransaction();
     try {
+      // Convert date string and timezone to Date object
+      const { date, timezone, ...rest } = createTransactionDto;
+      const dateObj = dayjs.tz(date, timezone).utc().toDate();
+
       // Create transaction
-      const createdTransaction = new this.transactionModel(
-        createTransactionDto
-      );
+      const createdTransaction = new this.transactionModel({
+        ...rest,
+        date: dateObj,
+      });
       const savedTransaction = await createdTransaction.save({ session });
 
       // Update account balance
@@ -67,14 +73,15 @@ export class TransactionsService {
   }
 
   async getIdsByDate(query: FindTransactionsQueryWithUserId) {
-    const { startDate, endDate, userId } = query;
+    const { startDate, endDate, timezone, userId } = query;
 
     const match: FilterQuery<Transaction> = { userId };
 
     if (startDate || endDate) {
       const dateFilter: QuerySelector<Date> = {};
-      if (startDate) dateFilter.$gte = new Date(startDate);
-      if (endDate) dateFilter.$lte = new Date(endDate);
+      if (startDate)
+        dateFilter.$gte = dayjs.tz(startDate, timezone).utc().toDate();
+      if (endDate) dateFilter.$lte = dayjs.tz(endDate, timezone).utc().toDate();
       match.date = dateFilter;
     }
 
@@ -83,7 +90,11 @@ export class TransactionsService {
       {
         $project: {
           formattedDate: {
-            $dateToString: { format: "%Y-%m-%d", date: "$date" },
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$date",
+              timezone,
+            },
           },
           _id: 1,
         },
@@ -101,14 +112,15 @@ export class TransactionsService {
   }
 
   async findAll(query: FindTransactionsQueryWithUserId) {
-    const { startDate, endDate, userId } = query;
+    const { startDate, endDate, timezone, userId } = query;
 
     const filter: RootFilterQuery<Transaction> = { userId };
 
     if (startDate || endDate) {
       const dateFilter: QuerySelector<Date> = {};
-      if (startDate) dateFilter.$gte = new Date(startDate);
-      if (endDate) dateFilter.$lte = new Date(endDate);
+      if (startDate)
+        dateFilter.$gte = dayjs.tz(startDate, timezone).utc().toDate();
+      if (endDate) dateFilter.$lte = dayjs.tz(endDate, timezone).utc().toDate();
       filter.date = dateFilter;
     }
 

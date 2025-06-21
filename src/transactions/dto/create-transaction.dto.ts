@@ -35,6 +35,11 @@ export class CreateTransactionDto {
   @IsString()
   note?: string;
 
+  @IsString()
   @IsNotEmpty()
-  date: Date;
+  date: string; // format: "YYYY-MM-DD"
+
+  @IsString()
+  @IsNotEmpty()
+  timezone: string; // e.g., "Asia/Bangkok"
 }

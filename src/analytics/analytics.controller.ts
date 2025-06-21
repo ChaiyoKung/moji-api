@@ -13,8 +13,14 @@ export class AnalyticsController {
   async getSummary(
     @Req() req: Request,
     @Query("type") type: "income" | "expense",
-    @Query("date") date: string
+    @Query("date") date: string,
+    @Query("timezone") timezone: string
   ) {
-    return this.analyticsService.getSummary(req.user.userId, type, date);
+    return this.analyticsService.getSummary(
+      req.user.userId,
+      type,
+      date,
+      timezone
+    );
   }
 }

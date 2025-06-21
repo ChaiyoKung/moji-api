@@ -22,11 +22,13 @@ export class TransactionsController {
   async getIdsByDate(
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
+    @Query("timezone") timezone: string,
     @Req() req: Request
   ) {
     return this.transactionsService.getIdsByDate({
       startDate,
       endDate,
+      timezone,
       userId: req.user.userId,
     });
   }

@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Transaction } from "../transactions/schemas/transaction.schema";
 import { z } from "zod/v4";
+import dayjs from "dayjs";
 
 @Injectable()
 export class AnalyticsService {
@@ -17,14 +18,15 @@ export class AnalyticsService {
     /**
      * Date is in 'YYYY-MM-DD' format
      */
-    date: string
+    date: string,
+    timezone: string
   ) {
     const result = await this.transactionModel.aggregate([
       {
         $match: {
           userId,
           type,
-          date: new Date(date),
+          date: dayjs.tz(date, timezone).utc().toDate(),
         },
       },
       {
