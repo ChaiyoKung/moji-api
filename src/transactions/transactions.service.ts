@@ -67,7 +67,7 @@ export class TransactionsService {
     }
   }
 
-  async getIdsByRange(query: FindTransactionsQueryWithUserId) {
+  async getIdsByDate(query: FindTransactionsQueryWithUserId) {
     const { startDate, endDate, userId } = query;
 
     const match: FilterQuery<Transaction> = { userId };

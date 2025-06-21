@@ -20,12 +20,12 @@ export class TransactionsController {
 
   @UseGuards(JwtAuthGuard)
   @Get("ids-by-date")
-  async getIdsByRange(
+  async getIdsByDate(
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
     @Req() req: Request
   ) {
-    return this.transactionsService.getIdsByRange({
+    return this.transactionsService.getIdsByDate({
       startDate,
       endDate,
       userId: req.user.userId,
