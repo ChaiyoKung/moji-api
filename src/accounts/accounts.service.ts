@@ -10,12 +10,12 @@ export class AccountsService {
     @InjectModel(Account.name) private accountModel: Model<Account>
   ) {}
 
-  async create(createAccountDto: CreateAccountDto): Promise<Account> {
+  async create(createAccountDto: CreateAccountDto) {
     const createdAccount = new this.accountModel(createAccountDto);
     return createdAccount.save();
   }
 
-  async findAllByUserId(userId: string): Promise<Account[]> {
+  async findAllByUserId(userId: string) {
     return this.accountModel.find({ userId }).exec();
   }
 }

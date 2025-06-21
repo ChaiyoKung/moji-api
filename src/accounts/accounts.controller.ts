@@ -1,7 +1,6 @@
 import { Controller, Post, Body, UseGuards, Get, Req } from "@nestjs/common";
 import { AccountsService } from "./accounts.service";
 import { CreateAccountDto } from "./dto/create-account.dto";
-import { Account } from "./schemas/account.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Request } from "express";
 
@@ -11,7 +10,7 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() createAccountDto: CreateAccountDto): Promise<Account> {
+  async create(@Body() createAccountDto: CreateAccountDto) {
     return this.accountsService.create(createAccountDto);
   }
 
