@@ -11,6 +11,7 @@ import { Transaction } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Account } from "../accounts/schemas/account.schema";
+import { CategoryDocument } from "../categories/schemas/category.schema";
 
 export interface FindTransactionsQueryWithUserId
   extends FindTransactionsQueryDto {
@@ -24,9 +25,7 @@ export class TransactionsService {
     @InjectModel(Account.name) private accountModel: Model<Account>
   ) {}
 
-  async create(
-    createTransactionDto: CreateTransactionDto
-  ): Promise<Transaction> {
+  async create(createTransactionDto: CreateTransactionDto) {
     const session = await this.transactionModel.db.startSession();
     session.startTransaction();
     try {
@@ -116,7 +115,7 @@ export class TransactionsService {
     return this.transactionModel
       .find(filter)
       .sort({ date: -1, createdAt: -1 })
-      .populate("categoryId")
+      .populate<{ categoryId: CategoryDocument }>("categoryId")
       .exec();
   }
 }

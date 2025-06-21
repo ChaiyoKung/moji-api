@@ -9,7 +9,6 @@ import {
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
-import { Transaction } from "./schemas/transaction.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Request } from "express";
@@ -43,9 +42,7 @@ export class TransactionsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(
-    @Body() createTransactionDto: CreateTransactionDto
-  ): Promise<Transaction> {
+  async create(@Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionsService.create(createTransactionDto);
   }
 }
