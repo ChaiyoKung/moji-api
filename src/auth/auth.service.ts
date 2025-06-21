@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { UsersService } from "../users/users.service";
 import bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
@@ -12,7 +13,8 @@ export class AuthService {
 
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private configService: ConfigService
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -56,7 +58,7 @@ export class AuthService {
     try {
       ticket = await client.verifyIdToken({
         idToken: idToken,
-        audience: process.env.GOOGLE_OAUTH_WEB_CLIENT_ID,
+        audience: this.configService.get<string>("GOOGLE_OAUTH_WEB_CLIENT_ID"),
       });
     } catch (error) {
       const errorStack = error instanceof Error ? error.stack : String(error);
