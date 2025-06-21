@@ -21,6 +21,10 @@ export class UsersService {
       throw new ConflictException("Email already in use");
     }
 
+    if (!createUserDto.password) {
+      throw new ConflictException("Password is required for registration");
+    }
+
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const userToSave = {
@@ -28,6 +32,18 @@ export class UsersService {
       password: hashedPassword,
     };
     const createdUser = new this.userModel(userToSave);
+    return createdUser.save();
+  }
+
+  async createGoogleUser(createUserDto: CreateUserDto) {
+    const existingUser = await this.userModel.findOne({
+      email: createUserDto.email,
+    });
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
   }
 }

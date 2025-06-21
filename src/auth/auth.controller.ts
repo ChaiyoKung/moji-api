@@ -10,4 +10,9 @@ export class AuthController {
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
+
+  @Post("google")
+  async googleLogin(@Body("idToken") idToken: string) {
+    return this.authService.googleLogin(idToken);
+  }
 }
