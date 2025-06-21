@@ -21,15 +21,9 @@ export class CategoriesService {
       .exec();
   }
 
-  async findIncomeForUser(userId: string) {
+  async findByTypeForUser(userId: string, type: "income" | "expense") {
     return this.categoryModel
-      .find({ $or: [{ userId: null }, { userId }], type: "income" })
-      .exec();
-  }
-
-  async findExpenseForUser(userId: string) {
-    return this.categoryModel
-      .find({ $or: [{ userId: null }, { userId }], type: "expense" })
+      .find({ $or: [{ userId: null }, { userId }], type })
       .exec();
   }
 }
