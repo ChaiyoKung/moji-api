@@ -1,7 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards, Req } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
-import { Category } from "./schemas/category.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Request } from "express";
 
@@ -29,9 +28,7 @@ export class CategoriesController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(
-    @Body() createCategoryDto: CreateCategoryDto
-  ): Promise<Category> {
+  async create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
 }

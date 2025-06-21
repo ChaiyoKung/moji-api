@@ -10,24 +10,24 @@ export class CategoriesService {
     @InjectModel(Category.name) private categoryModel: Model<Category>
   ) {}
 
-  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+  async create(createCategoryDto: CreateCategoryDto) {
     const createdCategory = new this.categoryModel(createCategoryDto);
     return createdCategory.save();
   }
 
-  async findAllForUser(userId: string): Promise<Category[]> {
+  async findAllForUser(userId: string) {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }] })
       .exec();
   }
 
-  async findIncomeForUser(userId: string): Promise<Category[]> {
+  async findIncomeForUser(userId: string) {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }], type: "income" })
       .exec();
   }
 
-  async findExpenseForUser(userId: string): Promise<Category[]> {
+  async findExpenseForUser(userId: string) {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }], type: "expense" })
       .exec();
