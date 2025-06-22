@@ -47,6 +47,8 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const payload = { username: user._doc.email, sub: user._doc._id };
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      user: user._doc,
       accessToken: this.jwtService.sign(payload),
     };
   }
@@ -90,6 +92,7 @@ export class AuthService {
 
     const jwtPayload = { username: user.email, sub: user._id };
     return {
+      user,
       accessToken: this.jwtService.sign(jwtPayload),
     };
   }
