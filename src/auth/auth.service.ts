@@ -43,13 +43,28 @@ export class AuthService {
     return null;
   }
 
-  login(user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const payload = { username: user._doc.email, sub: user._doc._id };
+  login(user: { _doc: { email: string; _id: string } }) {
+    const accessToken = this.jwtService.sign({
+      username: user._doc.email,
+      sub: user._doc._id,
+      type: "access",
+    });
+
+    const refreshToken = this.jwtService.sign(
+      { username: user._doc.email, sub: user._doc._id, type: "refresh" },
+      {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn: this.configService.get<string>(
+          "JWT_REFRESH_EXPIRES_IN",
+          "7d"
+        ),
+      }
+    );
+
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       user: user._doc,
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -90,10 +105,27 @@ export class AuthService {
       ],
     });
 
-    const jwtPayload = { username: user.email, sub: user._id };
+    const accessToken = this.jwtService.sign({
+      username: user.email,
+      sub: user._id,
+      type: "access",
+    });
+
+    const refreshToken = this.jwtService.sign(
+      { username: user.email, sub: user._id, type: "refresh" },
+      {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn: this.configService.get<string>(
+          "JWT_REFRESH_EXPIRES_IN",
+          "7d"
+        ),
+      }
+    );
+
     return {
       user,
-      accessToken: this.jwtService.sign(jwtPayload),
+      accessToken,
+      refreshToken,
     };
   }
 }

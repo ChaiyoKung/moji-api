@@ -19,7 +19,7 @@ export class AppController {
 
   @UseGuards(LocalAuthGuard)
   @Post("auth/login")
-  login(@Req() req: { user: { accessToken: string } }) {
+  login(@Req() req: { user: { _doc: { email: string; _id: string } } }) {
     return this.authService.login(req.user);
   }
 
