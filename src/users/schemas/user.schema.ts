@@ -40,6 +40,9 @@ export class User {
     currency?: string;
     language?: string;
   };
+
+  @Prop({ type: [String], default: [] })
+  refreshTokens?: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -46,4 +46,20 @@ export class UsersService {
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
   }
+
+  async updateRefreshTokenById(userId: string, refreshToken: string) {
+    return this.userModel
+      .updateOne(
+        { _id: userId },
+        {
+          $push: {
+            refreshTokens: {
+              $each: [refreshToken],
+              $slice: -5,
+            },
+          },
+        }
+      )
+      .exec();
+  }
 }

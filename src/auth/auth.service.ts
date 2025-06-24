@@ -43,7 +43,7 @@ export class AuthService {
     return null;
   }
 
-  login(user: { _doc: { email: string; _id: string } }) {
+  async login(user: { _doc: { email: string; _id: string } }) {
     const accessToken = this.jwtService.sign({
       username: user._doc.email,
       sub: user._doc._id,
@@ -59,6 +59,11 @@ export class AuthService {
           "7d"
         ),
       }
+    );
+
+    await this.usersService.updateRefreshTokenById(
+      user._doc._id.toString(),
+      refreshToken
     );
 
     return {
@@ -120,6 +125,11 @@ export class AuthService {
           "7d"
         ),
       }
+    );
+
+    await this.usersService.updateRefreshTokenById(
+      user._id.toString(),
+      refreshToken
     );
 
     return {
