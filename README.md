@@ -2,6 +2,18 @@
 
 The backend service for Moji, a minimal and friendly expense tracker app to help you stay mindful with your money — with a touch of charm.
 
+## Production
+
+```bash
+# build
+docker buildx build --platform linux/amd64 -t moji-api .
+
+# push to Docker Hub
+docker login
+docker tag moji-api chaiyokung/moji-api:latest
+docker push chaiyokung/moji-api:latest
+```
+
 ## MongoDB Collections Schema
 
 ### 1. users
