@@ -27,6 +27,9 @@ export class AuthService {
       // Find user by id from token payload
       const user = await this.usersService.findOne({ _id: payload.sub });
       if (!user || !user.refreshTokens?.includes(refreshToken)) {
+        this.logger.warn(
+          `Refresh token for user ${payload.sub} is invalid or not found`
+        );
         throw new UnauthorizedException("Invalid refresh token");
       }
 
