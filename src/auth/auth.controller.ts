@@ -6,6 +6,11 @@ import { CreateUserDto } from "../users/dto/create-user.dto";
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post("refresh")
+  async refresh(@Body("refreshToken") refreshToken: string) {
+    return this.authService.refreshAccessToken(refreshToken);
+  }
+
   @Post("register")
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);

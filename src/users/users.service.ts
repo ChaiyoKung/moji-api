@@ -62,4 +62,10 @@ export class UsersService {
       )
       .exec();
   }
+
+  async removeRefreshTokenById(userId: string, refreshToken: string) {
+    return this.userModel
+      .updateOne({ _id: userId }, { $pull: { refreshTokens: refreshToken } })
+      .exec();
+  }
 }

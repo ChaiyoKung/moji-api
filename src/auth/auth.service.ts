@@ -17,6 +17,57 @@ export class AuthService {
     private configService: ConfigService
   ) {}
 
+  async refreshAccessToken(refreshToken: string) {
+    try {
+      // Verify refresh token
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+      });
+
+      // Find user by id from token payload
+      const user = await this.usersService.findOne({ _id: payload.sub });
+      if (!user || !user.refreshTokens?.includes(refreshToken)) {
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Remove the used refresh token
+      await this.usersService.removeRefreshTokenById(
+        user._id.toString(),
+        refreshToken
+      );
+
+      // Issue new access token
+      const accessToken = this.jwtService.sign({
+        username: user.email,
+        sub: user._id,
+        type: "access",
+      });
+
+      // Issue new refresh token
+      const newRefreshToken = this.jwtService.sign(
+        { username: user.email, sub: user._id, type: "refresh" },
+        {
+          secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+          expiresIn: this.configService.get<string>(
+            "JWT_REFRESH_EXPIRES_IN",
+            "7d"
+          ),
+        }
+      );
+
+      // Save new refresh token
+      await this.usersService.updateRefreshTokenById(
+        user._id.toString(),
+        newRefreshToken
+      );
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      this.logger.error("Error refreshing access token:", error);
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
   async register(createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
