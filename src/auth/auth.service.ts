@@ -17,6 +17,27 @@ export class AuthService {
     private configService: ConfigService
   ) {}
 
+  async logout(userId: string, refreshToken: string) {
+    try {
+      // Find user by id
+      const user = await this.usersService.findOne({ _id: userId });
+      if (!user || !user.refreshTokens?.includes(refreshToken)) {
+        this.logger.warn(
+          `Logout: Refresh token for user ${userId} is invalid or not found`
+        );
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Remove the refresh token
+      await this.usersService.removeRefreshTokenById(userId, refreshToken);
+
+      return { message: "Logged out successfully" };
+    } catch (error) {
+      this.logger.error("Error during logout:", error);
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
   async refreshAccessToken(refreshToken: string) {
     try {
       // Verify refresh token
