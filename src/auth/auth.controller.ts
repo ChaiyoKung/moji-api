@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards } from "@nestjs/common";
+import { Controller, Post, Body, Req, UseGuards, Get } from "@nestjs/common";
 import { Request } from "express";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { LocalAuthGuard } from "./local-auth.guard";
@@ -37,5 +37,12 @@ export class AuthController {
     @Body("refreshToken") refreshToken: string
   ) {
     return this.authService.logout(req.user.userId, refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("me")
+  getProfile(@Req() req: Request) {
+    console.log("User profile accessed:", req.user);
+    return req.user;
   }
 }
