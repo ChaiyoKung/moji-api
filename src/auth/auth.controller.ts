@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Req, UseGuards } from "@nestjs/common";
 import { Request } from "express";
 import { JwtAuthGuard } from "./jwt-auth.guard";
+import { LocalAuthGuard } from "./local-auth.guard";
 import { AuthService } from "./auth.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 
@@ -21,6 +22,12 @@ export class AuthController {
   @Post("google")
   async googleLogin(@Body("idToken") idToken: string) {
     return this.authService.googleLogin(idToken);
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Post("login")
+  login(@Req() req: { user: { _doc: { email: string; _id: string } } }) {
+    return this.authService.login(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
