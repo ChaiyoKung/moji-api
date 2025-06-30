@@ -17,8 +17,14 @@ export class AuthService {
     private configService: ConfigService
   ) {}
 
-  async logout(userId: string, refreshToken: string) {
+  async logout(refreshToken: string) {
     try {
+      // Verify and decode refresh token to get userId
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+      });
+      const userId = payload.sub;
+
       // Find user by id
       const user = await this.usersService.findOne({ _id: userId });
       if (!user || !user.refreshTokens?.includes(refreshToken)) {
