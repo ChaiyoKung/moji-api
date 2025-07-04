@@ -19,10 +19,8 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     try {
-      // Verify and decode refresh token to get userId
-      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
-        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-      });
+      // Decode refresh token to get userId
+      const payload = this.jwtService.decode<{ sub: string }>(refreshToken);
       const userId = payload.sub;
 
       // Find user by id
