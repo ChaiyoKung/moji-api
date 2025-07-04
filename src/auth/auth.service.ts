@@ -17,6 +17,85 @@ export class AuthService {
     private configService: ConfigService
   ) {}
 
+  async logout(refreshToken: string) {
+    try {
+      // Decode refresh token to get userId
+      const payload = this.jwtService.decode<{ sub: string }>(refreshToken);
+      const userId = payload.sub;
+
+      // Find user by id
+      const user = await this.usersService.findOne({ _id: userId });
+      if (!user || !user.refreshTokens?.includes(refreshToken)) {
+        this.logger.warn(
+          `Logout: Refresh token for user ${userId} is invalid or not found`
+        );
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Remove the refresh token
+      await this.usersService.removeRefreshTokenById(userId, refreshToken);
+
+      return { message: "Logged out successfully" };
+    } catch (error) {
+      this.logger.error("Error during logout:", error);
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    try {
+      // Verify refresh token
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+      });
+
+      // Find user by id from token payload
+      const user = await this.usersService.findOne({ _id: payload.sub });
+      if (!user || !user.refreshTokens?.includes(refreshToken)) {
+        this.logger.warn(
+          `Refresh token for user ${payload.sub} is invalid or not found`
+        );
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Remove the used refresh token
+      await this.usersService.removeRefreshTokenById(
+        user._id.toString(),
+        refreshToken
+      );
+
+      // Issue new access token
+      const accessToken = this.jwtService.sign({
+        username: user.email,
+        sub: user._id,
+        type: "access",
+      });
+
+      // Issue new refresh token
+      const newRefreshToken = this.jwtService.sign(
+        { username: user.email, sub: user._id, type: "refresh" },
+        {
+          secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+          expiresIn: this.configService.get<string>(
+            "JWT_REFRESH_EXPIRES_IN",
+            "7d"
+          ),
+        }
+      );
+
+      // Save new refresh token
+      await this.usersService.updateRefreshTokenById(
+        user._id.toString(),
+        newRefreshToken
+      );
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      this.logger.error("Error refreshing access token:", error);
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
   async register(createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -43,13 +122,33 @@ export class AuthService {
     return null;
   }
 
-  login(user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const payload = { username: user._doc.email, sub: user._doc._id };
+  async login(user: { _doc: { email: string; _id: string } }) {
+    const accessToken = this.jwtService.sign({
+      username: user._doc.email,
+      sub: user._doc._id,
+      type: "access",
+    });
+
+    const refreshToken = this.jwtService.sign(
+      { username: user._doc.email, sub: user._doc._id, type: "refresh" },
+      {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn: this.configService.get<string>(
+          "JWT_REFRESH_EXPIRES_IN",
+          "7d"
+        ),
+      }
+    );
+
+    await this.usersService.updateRefreshTokenById(
+      user._doc._id.toString(),
+      refreshToken
+    );
+
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       user: user._doc,
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -90,10 +189,32 @@ export class AuthService {
       ],
     });
 
-    const jwtPayload = { username: user.email, sub: user._id };
+    const accessToken = this.jwtService.sign({
+      username: user.email,
+      sub: user._id,
+      type: "access",
+    });
+
+    const refreshToken = this.jwtService.sign(
+      { username: user.email, sub: user._id, type: "refresh" },
+      {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn: this.configService.get<string>(
+          "JWT_REFRESH_EXPIRES_IN",
+          "7d"
+        ),
+      }
+    );
+
+    await this.usersService.updateRefreshTokenById(
+      user._id.toString(),
+      refreshToken
+    );
+
     return {
       user,
-      accessToken: this.jwtService.sign(jwtPayload),
+      accessToken,
+      refreshToken,
     };
   }
 }
