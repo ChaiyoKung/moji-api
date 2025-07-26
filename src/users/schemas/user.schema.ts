@@ -8,9 +8,6 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop()
-  password?: string;
-
   @Prop({ required: true })
   displayName: string;
 
