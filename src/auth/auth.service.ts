@@ -1,9 +1,7 @@
 import { Injectable, UnauthorizedException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { UsersService } from "../users/users.service";
-import bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
-import { CreateUserDto } from "../users/dto/create-user.dto";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import dayjs from "dayjs";
 
@@ -94,62 +92,6 @@ export class AuthService {
       this.logger.error("Error refreshing access token:", error);
       throw new UnauthorizedException("Invalid refresh token");
     }
-  }
-
-  async register(createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
-  async validateUser(username: string, pass: string) {
-    const user = await this.usersService.findOne({ email: username });
-    if (!user) {
-      return null;
-    }
-
-    if (!user.password) {
-      throw new UnauthorizedException(
-        "This user does not have a password set. Please use Google login."
-      );
-    }
-
-    const isPasswordMatch = await bcrypt.compare(pass, user.password);
-    if (isPasswordMatch) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user;
-      return result;
-    }
-
-    return null;
-  }
-
-  async login(user: { _doc: { email: string; _id: string } }) {
-    const accessToken = this.jwtService.sign({
-      username: user._doc.email,
-      sub: user._doc._id,
-      type: "access",
-    });
-
-    const refreshToken = this.jwtService.sign(
-      { username: user._doc.email, sub: user._doc._id, type: "refresh" },
-      {
-        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-        expiresIn: this.configService.get<string>(
-          "JWT_REFRESH_EXPIRES_IN",
-          "7d"
-        ),
-      }
-    );
-
-    await this.usersService.updateRefreshTokenById(
-      user._doc._id.toString(),
-      refreshToken
-    );
-
-    return {
-      user: user._doc,
-      accessToken,
-      refreshToken,
-    };
   }
 
   async googleLogin(idToken: string) {
