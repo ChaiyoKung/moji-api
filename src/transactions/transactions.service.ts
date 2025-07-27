@@ -130,4 +130,53 @@ export class TransactionsService {
       .populate<{ categoryId: CategoryDocument }>("categoryId")
       .exec();
   }
+
+  async remove(id: string, userId: string) {
+    const session = await this.transactionModel.db.startSession();
+    session.startTransaction();
+    try {
+      // Find the transaction to be deleted
+      const transaction = await this.transactionModel
+        .findOne({ _id: id, userId })
+        .session(session);
+
+      if (!transaction) {
+        throw new NotFoundException("Transaction not found");
+      }
+
+      // Get the associated account
+      const account = await this.accountModel
+        .findById(transaction.accountId)
+        .session(session);
+
+      if (!account) {
+        throw new NotFoundException("Associated account not found");
+      }
+
+      // Reverse the transaction effect on account balance
+      let newBalance = account.balance || 0;
+      if (transaction.type === "income") {
+        newBalance -= transaction.amount; // Subtract income
+      } else if (transaction.type === "expense") {
+        newBalance += transaction.amount; // Add back expense
+      }
+
+      account.balance = newBalance;
+      await account.save({ session });
+
+      // Delete the transaction
+      await this.transactionModel
+        .deleteOne({ _id: id, userId })
+        .session(session);
+
+      await session.commitTransaction();
+
+      return { message: "Transaction deleted successfully" };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
 }

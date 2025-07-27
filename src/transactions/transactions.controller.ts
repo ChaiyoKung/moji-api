@@ -6,6 +6,8 @@ import {
   Get,
   Query,
   Req,
+  Delete,
+  Param,
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
@@ -46,5 +48,11 @@ export class TransactionsController {
   @Post()
   async create(@Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionsService.create(createTransactionDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(":id")
+  async remove(@Param("id") id: string, @Req() req: Request) {
+    return this.transactionsService.remove(id, req.user.userId);
   }
 }
