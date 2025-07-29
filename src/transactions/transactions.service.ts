@@ -181,4 +181,17 @@ export class TransactionsService {
       await session.endSession();
     }
   }
+
+  async findOne(id: string, userId: string) {
+    const transaction = await this.transactionModel
+      .findOne({ _id: id, userId })
+      .populate<{ categoryId: CategoryDocument }>("categoryId")
+      .exec();
+
+    if (!transaction) {
+      throw new NotFoundException("Transaction not found");
+    }
+
+    return transaction;
+  }
 }

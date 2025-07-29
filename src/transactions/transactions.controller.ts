@@ -55,4 +55,10 @@ export class TransactionsController {
   async remove(@Param("id") id: string, @Req() req: Request) {
     return this.transactionsService.remove(id, req.user.userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(":id")
+  async findOne(@Param("id") id: string, @Req() req: Request) {
+    return this.transactionsService.findOne(id, req.user.userId);
+  }
 }
