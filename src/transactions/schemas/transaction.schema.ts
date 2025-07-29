@@ -1,18 +1,26 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument, Types } from "mongoose";
+import mongoose, { HydratedDocument } from "mongoose";
 
 export type TransactionDocument = HydratedDocument<Transaction>;
 
 @Schema({ timestamps: true })
 export class Transaction {
-  @Prop({ type: Types.ObjectId, required: true, ref: "User" })
-  userId: Types.ObjectId;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" })
+  userId: mongoose.Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: "Account" })
-  accountId: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Account",
+  })
+  accountId: mongoose.Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: "Category" })
-  categoryId: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Category",
+  })
+  categoryId: mongoose.Types.ObjectId;
 
   @Prop({ required: true })
   type: string; // "income" or "expense"
