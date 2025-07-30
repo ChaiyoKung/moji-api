@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { Transaction } from "../transactions/schemas/transaction.schema";
 import { z } from "zod/v4";
 import dayjs from "dayjs";
@@ -24,7 +24,7 @@ export class AnalyticsService {
     const result = await this.transactionModel.aggregate([
       {
         $match: {
-          userId,
+          userId: new mongoose.Types.ObjectId(userId),
           type,
           date: dayjs.tz(date, timezone).utc().toDate(),
         },

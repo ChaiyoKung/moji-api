@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import {
+import mongoose, {
   FilterQuery,
   Model,
   PipelineStage,
@@ -75,7 +75,9 @@ export class TransactionsService {
   async getIdsByDate(query: FindTransactionsQueryWithUserId) {
     const { startDate, endDate, timezone, userId } = query;
 
-    const match: FilterQuery<Transaction> = { userId };
+    const match: FilterQuery<Transaction> = {
+      userId: new mongoose.Types.ObjectId(userId),
+    };
 
     if (startDate || endDate) {
       const dateFilter: QuerySelector<Date> = {};
