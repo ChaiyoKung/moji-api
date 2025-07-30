@@ -12,6 +12,10 @@ export class UsersService {
     return this.userModel.findOne(filter).exec();
   }
 
+  async profile(userId: string) {
+    return this.userModel.findById(userId, { refreshTokens: false }).exec();
+  }
+
   async createGoogleUser(createUserDto: CreateUserDto) {
     const existingUser = await this.userModel.findOne({
       email: createUserDto.email,
