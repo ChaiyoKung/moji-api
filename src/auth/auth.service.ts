@@ -15,6 +15,10 @@ export class AuthService {
     private configService: ConfigService
   ) {}
 
+  async getProfile(userId: string) {
+    return this.usersService.profile(userId);
+  }
+
   async logout(refreshToken: string) {
     try {
       // Decode refresh token to get userId
