@@ -8,9 +8,11 @@ import {
   Req,
   Delete,
   Param,
+  Put,
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
+import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Request } from "express";
@@ -60,5 +62,19 @@ export class TransactionsController {
   @Get(":id")
   async findOne(@Param("id") id: string, @Req() req: Request) {
     return this.transactionsService.findOne(id, req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put(":id")
+  async update(
+    @Param("id") id: string,
+    @Req() req: Request,
+    @Body() updateTransactionDto: UpdateTransactionDto
+  ) {
+    return this.transactionsService.update(
+      id,
+      req.user.userId,
+      updateTransactionDto
+    );
   }
 }

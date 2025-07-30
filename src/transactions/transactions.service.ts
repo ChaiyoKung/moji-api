@@ -9,6 +9,7 @@ import mongoose, {
 } from "mongoose";
 import { Transaction } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
+import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Account } from "../accounts/schemas/account.schema";
 import { CategoryDocument } from "../categories/schemas/category.schema";
@@ -193,5 +194,55 @@ export class TransactionsService {
     }
 
     return transaction;
+  }
+
+  async update(id: string, userId: string, dto: UpdateTransactionDto) {
+    const session = await this.transactionModel.db.startSession();
+    session.startTransaction();
+    try {
+      const transaction = await this.transactionModel
+        .findOne({ _id: id, userId })
+        .session(session);
+
+      if (!transaction) {
+        throw new NotFoundException("Transaction not found");
+      }
+
+      const account = await this.accountModel
+        .findById(transaction.accountId)
+        .session(session);
+
+      if (!account) {
+        throw new NotFoundException("Associated account not found");
+      }
+
+      // Adjust account balance if amount changes
+      if (transaction.amount !== dto.amount) {
+        if (transaction.type === "income") {
+          account.balance =
+            (account.balance || 0) - transaction.amount + dto.amount;
+        } else if (transaction.type === "expense") {
+          account.balance =
+            (account.balance || 0) + transaction.amount - dto.amount;
+        }
+        await account.save({ session });
+      }
+
+      // Update transaction fields
+      transaction.categoryId = new mongoose.Types.ObjectId(dto.categoryId);
+      transaction.amount = dto.amount;
+      transaction.note = dto.note;
+
+      await transaction.save({ session });
+
+      await session.commitTransaction();
+
+      return transaction;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 }
