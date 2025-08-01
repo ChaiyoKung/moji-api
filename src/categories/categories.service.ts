@@ -18,12 +18,14 @@ export class CategoriesService {
   async findAllForUser(userId: string) {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }] })
+      .sort({ _id: 1 })
       .exec();
   }
 
   async findByTypeForUser(userId: string, type: "income" | "expense") {
     return this.categoryModel
       .find({ $or: [{ userId: null }, { userId }], type })
+      .sort({ _id: 1 })
       .exec();
   }
 }
