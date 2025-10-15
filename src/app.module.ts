@@ -10,6 +10,7 @@ import { TransactionsModule } from "./transactions/transactions.module";
 import { AuthModule } from "./auth/auth.module";
 import { LoggerMiddleware } from "./logger.middleware";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { VersionModule } from "./version/version.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AnalyticsModule } from "./analytics/analytics.module";
     TransactionsModule,
     AuthModule,
     AnalyticsModule,
+    VersionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
