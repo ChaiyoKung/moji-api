@@ -5,6 +5,9 @@ The backend service for Moji, a minimal and friendly expense tracker app to help
 ## Production
 
 ```bash
+# bump version
+pnpm run release
+
 # build
 docker buildx build --platform linux/amd64 -t moji-api .
 
