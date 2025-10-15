@@ -25,3 +25,4 @@ export class Account {
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);
+AccountSchema.index({ userId: 1 });
