@@ -11,6 +11,8 @@ import { AuthModule } from "./auth/auth.module";
 import { LoggerMiddleware } from "./logger.middleware";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { VersionModule } from "./version/version.module";
+import { ServeStaticModule } from "@nestjs/serve-static";
+import { join } from "node:path";
 
 @Module({
   imports: [
@@ -21,6 +23,9 @@ import { VersionModule } from "./version/version.module";
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>("MONGODB_URI"),
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, "../public"),
     }),
     UsersModule,
     AccountsModule,
