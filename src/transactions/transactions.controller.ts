@@ -9,6 +9,7 @@ import {
   Delete,
   Param,
   Put,
+  ParseArrayPipe,
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
@@ -50,6 +51,15 @@ export class TransactionsController {
   @Post()
   async create(@Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionsService.create(createTransactionDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("batch")
+  async createMany(
+    @Body(new ParseArrayPipe({ items: CreateTransactionDto }))
+    createTransactionDtos: CreateTransactionDto[]
+  ) {
+    return this.transactionsService.createMany(createTransactionDtos);
   }
 
   @UseGuards(JwtAuthGuard)

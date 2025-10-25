@@ -73,6 +73,58 @@ export class TransactionsService {
     }
   }
 
+  async createMany(createTransactionDtos: CreateTransactionDto[]) {
+    const session = await this.transactionModel.db.startSession();
+    session.startTransaction();
+
+    const results: Transaction[] = [];
+    try {
+      for (const dto of createTransactionDtos) {
+        // Convert date string and timezone to Date object
+        const { date, timezone, ...rest } = dto;
+        const dateObj = dayjs.tz(date, timezone).utc().toDate();
+
+        // Create transaction
+        const createdTransaction = new this.transactionModel({
+          ...rest,
+          date: dateObj,
+        });
+        const savedTransaction = await createdTransaction.save({ session });
+
+        // Update account balance
+        const { accountId, amount, type } = dto;
+        const account = await this.accountModel
+          .findById(accountId)
+          .session(session);
+
+        if (!account) {
+          throw new NotFoundException("Account not found");
+        }
+
+        let newBalance = account.balance || 0;
+        if (type === "income") {
+          newBalance += amount;
+        } else if (type === "expense") {
+          newBalance -= amount;
+        }
+
+        account.balance = newBalance;
+        await account.save({ session });
+
+        results.push(savedTransaction);
+      }
+
+      await session.commitTransaction();
+
+      return results;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
   async getIdsByDate(query: FindTransactionsQueryWithUserId) {
     const { startDate, endDate, timezone, userId } = query;
 
