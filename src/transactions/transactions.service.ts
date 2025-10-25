@@ -27,40 +27,52 @@ export class TransactionsService {
     @InjectModel(Account.name) private accountModel: Model<Account>
   ) {}
 
+  private async insertTransactionWithBalanceUpdate(
+    dto: CreateTransactionDto,
+    session: mongoose.ClientSession
+  ): Promise<Transaction> {
+    // Convert date string and timezone to Date object
+    const { date, timezone, ...rest } = dto;
+    const dateObj = dayjs.tz(date, timezone).utc().toDate();
+
+    // Create transaction
+    const createdTransaction = new this.transactionModel({
+      ...rest,
+      date: dateObj,
+    });
+    const savedTransaction = await createdTransaction.save({ session });
+
+    // Update account balance
+    const { accountId, amount, type } = dto;
+    const account = await this.accountModel
+      .findById(accountId)
+      .session(session);
+
+    if (!account) {
+      throw new NotFoundException("Account not found");
+    }
+
+    let newBalance = account.balance || 0;
+    if (type === "income") {
+      newBalance += amount;
+    } else if (type === "expense") {
+      newBalance -= amount;
+    }
+
+    account.balance = newBalance;
+    await account.save({ session });
+
+    return savedTransaction;
+  }
+
   async create(createTransactionDto: CreateTransactionDto) {
     const session = await this.transactionModel.db.startSession();
     session.startTransaction();
     try {
-      // Convert date string and timezone to Date object
-      const { date, timezone, ...rest } = createTransactionDto;
-      const dateObj = dayjs.tz(date, timezone).utc().toDate();
-
-      // Create transaction
-      const createdTransaction = new this.transactionModel({
-        ...rest,
-        date: dateObj,
-      });
-      const savedTransaction = await createdTransaction.save({ session });
-
-      // Update account balance
-      const { accountId, amount, type } = createTransactionDto;
-      const account = await this.accountModel
-        .findById(accountId)
-        .session(session);
-
-      if (!account) {
-        throw new NotFoundException("Account not found");
-      }
-
-      let newBalance = account.balance || 0;
-      if (type === "income") {
-        newBalance += amount;
-      } else if (type === "expense") {
-        newBalance -= amount;
-      }
-
-      account.balance = newBalance;
-      await account.save({ session });
+      const savedTransaction = await this.insertTransactionWithBalanceUpdate(
+        createTransactionDto,
+        session
+      );
 
       await session.commitTransaction();
 
@@ -80,37 +92,10 @@ export class TransactionsService {
     const results: Transaction[] = [];
     try {
       for (const dto of createTransactionDtos) {
-        // Convert date string and timezone to Date object
-        const { date, timezone, ...rest } = dto;
-        const dateObj = dayjs.tz(date, timezone).utc().toDate();
-
-        // Create transaction
-        const createdTransaction = new this.transactionModel({
-          ...rest,
-          date: dateObj,
-        });
-        const savedTransaction = await createdTransaction.save({ session });
-
-        // Update account balance
-        const { accountId, amount, type } = dto;
-        const account = await this.accountModel
-          .findById(accountId)
-          .session(session);
-
-        if (!account) {
-          throw new NotFoundException("Account not found");
-        }
-
-        let newBalance = account.balance || 0;
-        if (type === "income") {
-          newBalance += amount;
-        } else if (type === "expense") {
-          newBalance -= amount;
-        }
-
-        account.balance = newBalance;
-        await account.save({ session });
-
+        const savedTransaction = await this.insertTransactionWithBalanceUpdate(
+          dto,
+          session
+        );
         results.push(savedTransaction);
       }
 
