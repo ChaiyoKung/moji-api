@@ -5,6 +5,9 @@ The backend service for Moji, a minimal and friendly expense tracker app to help
 ## Production
 
 ```bash
+git checkout main
+git pull origin main
+
 # bump version
 pnpm run release
 
