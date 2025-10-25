@@ -10,6 +10,7 @@ import {
   Param,
   Put,
   ParseArrayPipe,
+  BadRequestException,
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
@@ -17,10 +18,14 @@ import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Request } from "express";
+import { ConfigService } from "@nestjs/config";
 
 @Controller("transactions")
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly configService: ConfigService
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get("ids-by-date")
@@ -59,6 +64,16 @@ export class TransactionsController {
     @Body(new ParseArrayPipe({ items: CreateTransactionDto }))
     createTransactionDtos: CreateTransactionDto[]
   ) {
+    const maxBatchSize = this.configService.get<number>(
+      "TRANSACTION_INSERT_MAX_BATCH_SIZE",
+      10
+    );
+    if (createTransactionDtos.length > maxBatchSize) {
+      throw new BadRequestException(
+        `Batch size exceeds the maximum limit of ${maxBatchSize}`
+      );
+    }
+
     return this.transactionsService.createMany(createTransactionDtos);
   }
 
