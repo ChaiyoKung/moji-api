@@ -4,6 +4,7 @@ import {
   IsString,
   IsNumber,
   IsMongoId,
+  IsEnum,
 } from "class-validator";
 
 export class CreateTransactionDto {
@@ -21,7 +22,8 @@ export class CreateTransactionDto {
 
   @IsString()
   @IsNotEmpty()
-  type: string; // "income" or "expense"
+  @IsEnum(["income", "expense"])
+  type: string;
 
   @IsNumber()
   @IsNotEmpty()

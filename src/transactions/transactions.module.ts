@@ -4,9 +4,11 @@ import { TransactionsService } from "./transactions.service";
 import { TransactionsController } from "./transactions.controller";
 import { Transaction, TransactionSchema } from "./schemas/transaction.schema";
 import { Account, AccountSchema } from "../accounts/schemas/account.schema";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
+    ConfigModule,
     MongooseModule.forFeature([
       { name: Transaction.name, schema: TransactionSchema },
       { name: Account.name, schema: AccountSchema },
