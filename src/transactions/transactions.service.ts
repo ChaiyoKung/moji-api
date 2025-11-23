@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, {
   FilterQuery,
@@ -22,6 +22,8 @@ export interface FindTransactionsQueryWithUserId
 
 @Injectable()
 export class TransactionsService {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(
     @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
     @InjectModel(Account.name) private accountModel: Model<Account>
@@ -260,8 +262,29 @@ export class TransactionsService {
         throw new NotFoundException("Associated account not found");
       }
 
-      // Adjust account balance if amount changes
-      if (transaction.amount !== dto.amount) {
+      const txnStatus = transaction.status || "confirmed";
+      const dtoStatus = dto.status || "confirmed";
+      // If status changes from draft to confirmed, apply balance
+      if (txnStatus === "draft" && dtoStatus === "confirmed") {
+        this.logger.log(
+          `Applying balance for transaction ${id} as it is confirmed`
+        );
+        if (transaction.type === "income") {
+          account.balance = (account.balance || 0) + dto.amount;
+        } else if (transaction.type === "expense") {
+          account.balance = (account.balance || 0) - dto.amount;
+        }
+        await account.save({ session });
+      }
+      // If status is confirmed and amount changes, adjust balance
+      else if (
+        txnStatus === "confirmed" &&
+        dtoStatus === "confirmed" &&
+        transaction.amount !== dto.amount
+      ) {
+        this.logger.log(
+          `Adjusting balance for transaction ${id} due to amount change from ${transaction.amount} to ${dto.amount}`
+        );
         if (transaction.type === "income") {
           account.balance =
             (account.balance || 0) - transaction.amount + dto.amount;
@@ -276,6 +299,7 @@ export class TransactionsService {
       transaction.categoryId = new mongoose.Types.ObjectId(dto.categoryId);
       transaction.amount = dto.amount;
       transaction.note = dto.note;
+      transaction.status = dtoStatus;
 
       await transaction.save({ session });
 
