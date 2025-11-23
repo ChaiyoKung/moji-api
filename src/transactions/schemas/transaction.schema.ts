@@ -36,6 +36,9 @@ export class Transaction {
 
   @Prop({ required: true })
   date: Date;
+
+  @Prop({ type: String, default: "confirmed" })
+  status?: "draft" | "confirmed";
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

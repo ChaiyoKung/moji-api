@@ -32,35 +32,38 @@ export class TransactionsService {
     session: mongoose.ClientSession
   ): Promise<Transaction> {
     // Convert date string and timezone to Date object
-    const { date, timezone, ...rest } = dto;
+    const { date, timezone, status = "confirmed", ...rest } = dto;
     const dateObj = dayjs.tz(date, timezone).utc().toDate();
 
     // Create transaction
     const createdTransaction = new this.transactionModel({
       ...rest,
       date: dateObj,
+      status,
     });
     const savedTransaction = await createdTransaction.save({ session });
 
-    // Update account balance
-    const { accountId, amount, type } = dto;
-    const account = await this.accountModel
-      .findById(accountId)
-      .session(session);
+    // Only update account balance if status is "confirmed"
+    if (status === "confirmed") {
+      const { accountId, amount, type } = dto;
+      const account = await this.accountModel
+        .findById(accountId)
+        .session(session);
 
-    if (!account) {
-      throw new NotFoundException("Account not found");
+      if (!account) {
+        throw new NotFoundException("Account not found");
+      }
+
+      let newBalance = account.balance || 0;
+      if (type === "income") {
+        newBalance += amount;
+      } else if (type === "expense") {
+        newBalance -= amount;
+      }
+
+      account.balance = newBalance;
+      await account.save({ session });
     }
-
-    let newBalance = account.balance || 0;
-    if (type === "income") {
-      newBalance += amount;
-    } else if (type === "expense") {
-      newBalance -= amount;
-    }
-
-    account.balance = newBalance;
-    await account.save({ session });
 
     return savedTransaction;
   }
@@ -184,25 +187,29 @@ export class TransactionsService {
         throw new NotFoundException("Transaction not found");
       }
 
-      // Get the associated account
-      const account = await this.accountModel
-        .findById(transaction.accountId)
-        .session(session);
+      // Only reverse balance if transaction is confirmed
+      const status = transaction.status || "confirmed";
+      if (status === "confirmed") {
+        // Get the associated account
+        const account = await this.accountModel
+          .findById(transaction.accountId)
+          .session(session);
 
-      if (!account) {
-        throw new NotFoundException("Associated account not found");
+        if (!account) {
+          throw new NotFoundException("Associated account not found");
+        }
+
+        // Reverse the transaction effect on account balance
+        let newBalance = account.balance || 0;
+        if (transaction.type === "income") {
+          newBalance -= transaction.amount; // Subtract income
+        } else if (transaction.type === "expense") {
+          newBalance += transaction.amount; // Add back expense
+        }
+
+        account.balance = newBalance;
+        await account.save({ session });
       }
-
-      // Reverse the transaction effect on account balance
-      let newBalance = account.balance || 0;
-      if (transaction.type === "income") {
-        newBalance -= transaction.amount; // Subtract income
-      } else if (transaction.type === "expense") {
-        newBalance += transaction.amount; // Add back expense
-      }
-
-      account.balance = newBalance;
-      await account.save({ session });
 
       // Delete the transaction
       await this.transactionModel

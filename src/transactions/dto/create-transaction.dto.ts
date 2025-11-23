@@ -44,4 +44,8 @@ export class CreateTransactionDto {
   @IsString()
   @IsNotEmpty()
   timezone: string; // e.g., "Asia/Bangkok"
+
+  @IsOptional()
+  @IsEnum(["draft", "confirmed"])
+  status?: "draft" | "confirmed";
 }
