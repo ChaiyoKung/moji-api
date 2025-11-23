@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, {
   FilterQuery,
@@ -22,6 +22,8 @@ export interface FindTransactionsQueryWithUserId
 
 @Injectable()
 export class TransactionsService {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(
     @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
     @InjectModel(Account.name) private accountModel: Model<Account>
@@ -32,35 +34,38 @@ export class TransactionsService {
     session: mongoose.ClientSession
   ): Promise<Transaction> {
     // Convert date string and timezone to Date object
-    const { date, timezone, ...rest } = dto;
+    const { date, timezone, status = "confirmed", ...rest } = dto;
     const dateObj = dayjs.tz(date, timezone).utc().toDate();
 
     // Create transaction
     const createdTransaction = new this.transactionModel({
       ...rest,
       date: dateObj,
+      status,
     });
     const savedTransaction = await createdTransaction.save({ session });
 
-    // Update account balance
-    const { accountId, amount, type } = dto;
-    const account = await this.accountModel
-      .findById(accountId)
-      .session(session);
+    // Only update account balance if status is "confirmed"
+    if (status === "confirmed") {
+      const { accountId, amount, type } = dto;
+      const account = await this.accountModel
+        .findById(accountId)
+        .session(session);
 
-    if (!account) {
-      throw new NotFoundException("Account not found");
+      if (!account) {
+        throw new NotFoundException("Account not found");
+      }
+
+      let newBalance = account.balance || 0;
+      if (type === "income") {
+        newBalance += amount;
+      } else if (type === "expense") {
+        newBalance -= amount;
+      }
+
+      account.balance = newBalance;
+      await account.save({ session });
     }
-
-    let newBalance = account.balance || 0;
-    if (type === "income") {
-      newBalance += amount;
-    } else if (type === "expense") {
-      newBalance -= amount;
-    }
-
-    account.balance = newBalance;
-    await account.save({ session });
 
     return savedTransaction;
   }
@@ -184,25 +189,29 @@ export class TransactionsService {
         throw new NotFoundException("Transaction not found");
       }
 
-      // Get the associated account
-      const account = await this.accountModel
-        .findById(transaction.accountId)
-        .session(session);
+      // Only reverse balance if transaction is confirmed
+      const status = transaction.status || "confirmed";
+      if (status === "confirmed") {
+        // Get the associated account
+        const account = await this.accountModel
+          .findById(transaction.accountId)
+          .session(session);
 
-      if (!account) {
-        throw new NotFoundException("Associated account not found");
+        if (!account) {
+          throw new NotFoundException("Associated account not found");
+        }
+
+        // Reverse the transaction effect on account balance
+        let newBalance = account.balance || 0;
+        if (transaction.type === "income") {
+          newBalance -= transaction.amount; // Subtract income
+        } else if (transaction.type === "expense") {
+          newBalance += transaction.amount; // Add back expense
+        }
+
+        account.balance = newBalance;
+        await account.save({ session });
       }
-
-      // Reverse the transaction effect on account balance
-      let newBalance = account.balance || 0;
-      if (transaction.type === "income") {
-        newBalance -= transaction.amount; // Subtract income
-      } else if (transaction.type === "expense") {
-        newBalance += transaction.amount; // Add back expense
-      }
-
-      account.balance = newBalance;
-      await account.save({ session });
 
       // Delete the transaction
       await this.transactionModel
@@ -253,8 +262,29 @@ export class TransactionsService {
         throw new NotFoundException("Associated account not found");
       }
 
-      // Adjust account balance if amount changes
-      if (transaction.amount !== dto.amount) {
+      const txnStatus = transaction.status || "confirmed";
+      const dtoStatus = dto.status || "confirmed";
+      // If status changes from draft to confirmed, apply balance
+      if (txnStatus === "draft" && dtoStatus === "confirmed") {
+        this.logger.log(
+          `Applying balance for transaction ${id} as it is confirmed`
+        );
+        if (transaction.type === "income") {
+          account.balance = (account.balance || 0) + dto.amount;
+        } else if (transaction.type === "expense") {
+          account.balance = (account.balance || 0) - dto.amount;
+        }
+        await account.save({ session });
+      }
+      // If status is confirmed and amount changes, adjust balance
+      else if (
+        txnStatus === "confirmed" &&
+        dtoStatus === "confirmed" &&
+        transaction.amount !== dto.amount
+      ) {
+        this.logger.log(
+          `Adjusting balance for transaction ${id} due to amount change from ${transaction.amount} to ${dto.amount}`
+        );
         if (transaction.type === "income") {
           account.balance =
             (account.balance || 0) - transaction.amount + dto.amount;
@@ -269,6 +299,7 @@ export class TransactionsService {
       transaction.categoryId = new mongoose.Types.ObjectId(dto.categoryId);
       transaction.amount = dto.amount;
       transaction.note = dto.note;
+      transaction.status = dtoStatus;
 
       await transaction.save({ session });
 
