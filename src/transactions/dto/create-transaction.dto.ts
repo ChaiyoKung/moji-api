@@ -25,9 +25,9 @@ export class CreateTransactionDto {
   @IsEnum(["income", "expense"])
   type: string;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  amount: number;
+  amount?: number;
 
   @IsString()
   @IsNotEmpty()

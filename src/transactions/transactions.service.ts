@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, {
   FilterQuery,
@@ -48,6 +53,12 @@ export class TransactionsService {
     // Only update account balance if status is "confirmed"
     if (status === "confirmed") {
       const { accountId, amount, type } = dto;
+      if (!amount) {
+        throw new BadRequestException(
+          "Amount must be provided for confirmed transactions"
+        );
+      }
+
       const account = await this.accountModel
         .findById(accountId)
         .session(session);
@@ -192,6 +203,12 @@ export class TransactionsService {
       // Only reverse balance if transaction is confirmed
       const status = transaction.status || "confirmed";
       if (status === "confirmed") {
+        if (!transaction.amount) {
+          throw new BadRequestException(
+            "Transaction amount is missing, cannot adjust balance"
+          );
+        }
+
         // Get the associated account
         const account = await this.accountModel
           .findById(transaction.accountId)
@@ -269,6 +286,13 @@ export class TransactionsService {
         this.logger.log(
           `Applying balance for transaction ${id} as it is confirmed`
         );
+
+        if (!dto.amount) {
+          throw new BadRequestException(
+            "Amount must be provided when confirming a transaction"
+          );
+        }
+
         if (transaction.type === "income") {
           account.balance = (account.balance || 0) + dto.amount;
         } else if (transaction.type === "expense") {
@@ -285,6 +309,19 @@ export class TransactionsService {
         this.logger.log(
           `Adjusting balance for transaction ${id} due to amount change from ${transaction.amount} to ${dto.amount}`
         );
+
+        if (!dto.amount) {
+          throw new BadRequestException(
+            "Amount must be provided for confirmed transactions"
+          );
+        }
+
+        if (!transaction.amount) {
+          throw new BadRequestException(
+            "Original transaction amount is missing, cannot adjust balance"
+          );
+        }
+
         if (transaction.type === "income") {
           account.balance =
             (account.balance || 0) - transaction.amount + dto.amount;

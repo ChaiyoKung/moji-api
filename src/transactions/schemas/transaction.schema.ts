@@ -25,8 +25,8 @@ export class Transaction {
   @Prop({ required: true })
   type: string; // "income" or "expense"
 
-  @Prop({ required: true })
-  amount: number;
+  @Prop()
+  amount?: number;
 
   @Prop({ required: true })
   currency: string;

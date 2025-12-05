@@ -12,9 +12,9 @@ export class UpdateTransactionDto {
   @IsNotEmpty()
   categoryId: string;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  amount: number;
+  amount?: number;
 
   @IsOptional()
   @IsString()
