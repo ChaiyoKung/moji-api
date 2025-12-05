@@ -27,6 +27,7 @@ export class AnalyticsService {
           userId: new mongoose.Types.ObjectId(userId),
           type,
           date: dayjs.tz(date, timezone).utc().toDate(),
+          $or: [{ status: "confirmed" }, { status: { $exists: false } }],
         },
       },
       {
