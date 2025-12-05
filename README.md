@@ -31,7 +31,7 @@ docker push chaiyokung/moji-api:latest
   _id: ObjectId,
   email: String,                   // อีเมล (unique)
   displayName: String,             // ชื่อที่แสดง
-  avatarUrl: String,               // ลิงก์รูปโปรไฟล์ (optional)
+  avatarUrl?: String,              // ลิงก์รูปโปรไฟล์ (optional)
   providers: [                     // รายการ OAuth2 providers ที่เชื่อมต่อ
     {
       provider: String,            // เช่น "google", "facebook"
@@ -41,10 +41,11 @@ docker push chaiyokung/moji-api:latest
   ],
   createdAt: Date,                 // วันที่สมัคร
   updatedAt: Date,                 // วันที่แก้ไขล่าสุด
-  settings: {                      // การตั้งค่าส่วนตัว (optional)
-    currency: String,              // สกุลเงินหลัก เช่น "THB"
-    language: String               // ภาษา เช่น "th"
-  }
+  settings?: {                     // การตั้งค่าส่วนตัว (optional)
+    currency?: String,             // สกุลเงินหลัก เช่น "THB"
+    language?: String              // ภาษา เช่น "th"
+  },
+  refreshTokens?: [String]         // refresh token ที่ยังใช้ได้ (optional)
 }
 ```
 
@@ -58,9 +59,9 @@ docker push chaiyokung/moji-api:latest
   userId: ObjectId,            // อ้างอิงไปยัง users._id
   name: String,                // ชื่อบัญชี เช่น "กระเป๋าสตางค์", "บัญชีธนาคาร"
   type: String,                // ประเภทบัญชี เช่น "cash", "bank", "credit"
-  balance: Number,             // ยอดเงินปัจจุบัน (optional, สำหรับแสดงผล)
+  balance?: Number,            // ยอดเงินปัจจุบัน (optional, สำหรับแสดงผล)
   currency: String,            // สกุลเงิน เช่น "THB"
-  icon: String,                // ไอคอนหรือสัญลักษณ์บัญชี (optional)
+  icon?: String,               // ไอคอนหรือสัญลักษณ์บัญชี (optional)
   createdAt: Date,             // วันที่สร้างบัญชี
   updatedAt: Date              // วันที่แก้ไขล่าสุด
 }
@@ -76,9 +77,9 @@ docker push chaiyokung/moji-api:latest
   userId: ObjectId,            // อ้างอิงไปยัง users._id (null ถ้าเป็น global category)
   name: String,                // ชื่อหมวดหมู่ เช่น "อาหาร", "เดินทาง"
   type: String,                // "income" หรือ "expense"
-  icon: String,                // ไอคอนหมวดหมู่ (optional)
-  color: String,               // สีประจำหมวดหมู่ (optional)
-  parentId: ObjectId,          // อ้างอิงหมวดหมู่หลัก (optional, สำหรับหมวดหมู่ย่อย)
+  icon?: String,               // ไอคอนหมวดหมู่ (optional)
+  color?: String,              // สีประจำหมวดหมู่ (optional)
+  parentId?: ObjectId,         // อ้างอิงหมวดหมู่หลัก (optional, สำหรับหมวดหมู่ย่อย)
   createdAt: Date,             // วันที่สร้าง
   updatedAt: Date              // วันที่แก้ไขล่าสุด
 }
@@ -95,10 +96,11 @@ docker push chaiyokung/moji-api:latest
   accountId: ObjectId,         // อ้างอิงไปยัง accounts._id
   categoryId: ObjectId,        // อ้างอิงไปยัง categories._id
   type: String,                // "income" หรือ "expense"
-  amount: Number,              // จำนวนเงิน
+  amount?: Number,             // จำนวนเงิน
   currency: String,            // สกุลเงิน เช่น "THB"
-  note: String,                // หมายเหตุ (optional)
+  note?: String,               // หมายเหตุ (optional)
   date: Date,                  // วันที่ทำรายการ
+  status?: String,             // สถานะ (optional)
   createdAt: Date,             // วันที่สร้างรายการ
   updatedAt: Date              // วันที่แก้ไขล่าสุด
 }
