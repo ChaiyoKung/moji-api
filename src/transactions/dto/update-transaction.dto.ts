@@ -1,9 +1,10 @@
 import {
-  IsNotEmpty,
+  IsOptional,
   IsString,
   IsNumber,
   IsMongoId,
-  IsOptional,
+  IsNotEmpty,
+  IsEnum,
 } from "class-validator";
 
 export class UpdateTransactionDto {
@@ -11,11 +12,15 @@ export class UpdateTransactionDto {
   @IsNotEmpty()
   categoryId: string;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  amount: number;
+  amount?: number;
 
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsEnum(["draft", "confirmed"])
+  status?: "draft" | "confirmed";
 }

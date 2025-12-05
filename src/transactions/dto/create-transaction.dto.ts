@@ -25,9 +25,9 @@ export class CreateTransactionDto {
   @IsEnum(["income", "expense"])
   type: string;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  amount: number;
+  amount?: number;
 
   @IsString()
   @IsNotEmpty()
@@ -44,4 +44,8 @@ export class CreateTransactionDto {
   @IsString()
   @IsNotEmpty()
   timezone: string; // e.g., "Asia/Bangkok"
+
+  @IsOptional()
+  @IsEnum(["draft", "confirmed"])
+  status?: "draft" | "confirmed";
 }

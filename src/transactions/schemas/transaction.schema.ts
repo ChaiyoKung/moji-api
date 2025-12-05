@@ -25,8 +25,8 @@ export class Transaction {
   @Prop({ required: true })
   type: string; // "income" or "expense"
 
-  @Prop({ required: true })
-  amount: number;
+  @Prop()
+  amount?: number;
 
   @Prop({ required: true })
   currency: string;
@@ -36,6 +36,9 @@ export class Transaction {
 
   @Prop({ required: true })
   date: Date;
+
+  @Prop({ type: String, default: "confirmed" })
+  status?: "draft" | "confirmed";
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
