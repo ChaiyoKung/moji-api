@@ -4,6 +4,7 @@ import { UsersService } from "../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import dayjs from "dayjs";
+import { StringValue } from "ms";
 
 @Injectable()
 export class AuthService {
@@ -78,7 +79,7 @@ export class AuthService {
         { username: user.email, sub: user._id, type: "refresh" },
         {
           secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-          expiresIn: this.configService.get<string>(
+          expiresIn: this.configService.get<StringValue>(
             "JWT_REFRESH_EXPIRES_IN",
             "7d"
           ),
@@ -145,7 +146,7 @@ export class AuthService {
       { username: user.email, sub: user._id, type: "refresh" },
       {
         secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-        expiresIn: this.configService.get<string>(
+        expiresIn: this.configService.get<StringValue>(
           "JWT_REFRESH_EXPIRES_IN",
           "7d"
         ),
