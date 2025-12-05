@@ -7,6 +7,7 @@ import { JwtStrategy } from "./jwt.strategy";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthController } from "./auth.controller";
 import { jwtConstants } from "./constants";
+import { StringValue } from "ms";
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { jwtConstants } from "./constants";
         ),
         signOptions: {
           expiresIn:
-            configService.get<string>("JWT_ACCESS_EXPIRES_IN") || "60s",
+            configService.get<StringValue>("JWT_ACCESS_EXPIRES_IN") || "60s",
         },
       }),
     }),
