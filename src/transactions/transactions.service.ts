@@ -28,7 +28,10 @@ import dayjs from "dayjs";
 
 const aiResponseSchema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.number().nullable(),
+  amount: z
+    .number()
+    .nullable()
+    .transform((v) => (v !== null ? Math.round(v) : null)),
   date: z.string().nullable(),
   note: z.string().nullable(),
   categoryId: z.string().nullable(),
@@ -392,21 +395,18 @@ export class TransactionsService {
 Available categories (pick the best matching _id):
 ${categoriesJson}
 
-Respond with ONLY a JSON object in this exact format:
-{
-  "type": "income" or "expense",
-  "amount": number or null (null if not confident),
-  "date": "YYYY-MM-DD" or null (null if not found),
-  "note": "short description" or null,
-  "categoryId": "_id from the categories list above" or null (null if no good match)
-}
+You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no explanation, no text before or after. Start your response with { and end with }.
+
+Required JSON format:
+{"type":"income"|"expense","amount":number|null,"date":"YYYY-MM-DD"|null,"note":"string"|null,"categoryId":"string"}
 
 Rules:
-- type: if the transaction is a purchase/payment/expense use "expense", if it's salary/refund/income use "income"
-- amount: extract the total amount as a number (no currency symbol), null if unclear
-- date: extract the transaction date in YYYY-MM-DD format, null if not found
-- note: write a short 1-line description of what was purchased/received
-- categoryId: pick the _id of the most relevant category from the list, null if none fit well`;
+- type: "expense" for purchases/payments, "income" for salary/refunds/income
+- amount: total amount as an integer (no currency symbol, no decimals — round if needed), null if unclear
+- date: transaction date as YYYY-MM-DD, null if not found
+- note: short 1-line description of what was purchased/received
+- categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
+- Do NOT wrap output in markdown code fences or any other formatting`;
 
     const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
     if (dto.text) {
@@ -429,8 +429,14 @@ Rules:
       response_format: { type: "json_object" },
     });
 
+    if (!response.choices[0].message.content) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain any content"
+      );
+    }
+
     const parseResult = aiResponseSchema.safeParse(
-      response.choices[0].message.content
+      JSON.parse(response.choices[0].message.content)
     );
     if (!parseResult.success) {
       throw new UnprocessableEntityException(

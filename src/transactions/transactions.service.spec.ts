@@ -58,7 +58,7 @@ function makeAiResponse(overrides: Record<string, unknown> = {}) {
 
 function makeCompletionResponse(content: unknown) {
   return {
-    choices: [{ message: { content } }],
+    choices: [{ message: { content: JSON.stringify(content) } }],
   };
 }
 
@@ -207,9 +207,9 @@ describe("TransactionsService.autoCreate", () => {
   });
 
   it("Zod parse error — AI returns invalid JSON structure, throws UnprocessableEntityException", async () => {
-    mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse({ amount: 100 })
-    );
+    mockChatCompletionsCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ amount: 100 }) } }],
+    });
     jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
 
     await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
