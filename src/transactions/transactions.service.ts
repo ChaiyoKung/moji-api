@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, {
@@ -16,9 +17,22 @@ import { Transaction } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
+import { AutoTransactionDto } from "./dto/auto-transaction.dto";
 import { Account } from "../accounts/schemas/account.schema";
 import { CategoryDocument } from "../categories/schemas/category.schema";
+import { CategoriesService } from "../categories/categories.service";
+import { ConfigService } from "@nestjs/config";
+import OpenAI from "openai";
+import { z } from "zod/v4";
 import dayjs from "dayjs";
+
+const aiResponseSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  amount: z.number().nullable(),
+  date: z.string().nullable(),
+  note: z.string().nullable(),
+  categoryId: z.string().nullable(),
+});
 
 export interface FindTransactionsQueryWithUserId
   extends FindTransactionsQueryDto {
@@ -31,7 +45,9 @@ export class TransactionsService {
 
   constructor(
     @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
-    @InjectModel(Account.name) private accountModel: Model<Account>
+    @InjectModel(Account.name) private accountModel: Model<Account>,
+    private categoriesService: CategoriesService,
+    private configService: ConfigService
   ) {}
 
   private async insertTransactionWithBalanceUpdate(
@@ -349,5 +365,109 @@ export class TransactionsService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async autoCreate(
+    dto: AutoTransactionDto,
+    imageBuffer: Buffer | null,
+    userId: string
+  ) {
+    const categories = await this.categoriesService.findAllForUser(userId);
+
+    const client = new OpenAI({
+      baseURL: this.configService.get<string>("OPENAI_BASE_URL"),
+      apiKey: this.configService.get<string>("OPENAI_API_KEY"),
+    });
+    const model = this.configService.get<string>(
+      "OPENAI_MODEL",
+      "gemini-3.5-flash"
+    );
+
+    const categoriesJson = JSON.stringify(
+      categories.map((c) => ({ _id: c._id, name: c.name, type: c.type }))
+    );
+
+    const systemPrompt = `You are a financial transaction extractor. Analyze the provided receipt image and/or text description and extract transaction information.
+
+Available categories (pick the best matching _id):
+${categoriesJson}
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "type": "income" or "expense",
+  "amount": number or null (null if not confident),
+  "date": "YYYY-MM-DD" or null (null if not found),
+  "note": "short description" or null,
+  "categoryId": "_id from the categories list above" or null (null if no good match)
+}
+
+Rules:
+- type: if the transaction is a purchase/payment/expense use "expense", if it's salary/refund/income use "income"
+- amount: extract the total amount as a number (no currency symbol), null if unclear
+- date: extract the transaction date in YYYY-MM-DD format, null if not found
+- note: write a short 1-line description of what was purchased/received
+- categoryId: pick the _id of the most relevant category from the list, null if none fit well`;
+
+    const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    if (dto.text) {
+      userContent.push({ type: "text", text: dto.text });
+    }
+    if (imageBuffer) {
+      const base64 = imageBuffer.toString("base64");
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:image/jpeg;base64,${base64}` },
+      });
+    }
+
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const parseResult = aiResponseSchema.safeParse(
+      response.choices[0].message.content
+    );
+    if (!parseResult.success) {
+      throw new UnprocessableEntityException(
+        "AI response did not match expected schema"
+      );
+    }
+    const { type, amount, note, categoryId } = parseResult.data;
+    let { date } = parseResult.data;
+
+    const categoryExists = categories.some((c) => String(c._id) === categoryId);
+    if (!categoryId || !categoryExists) {
+      throw new UnprocessableEntityException(
+        "AI returned a categoryId that does not match any of the user's categories"
+      );
+    }
+
+    if (!date) {
+      date = dayjs().tz(dto.timezone).format("YYYY-MM-DD");
+    }
+
+    const createDto: CreateTransactionDto = {
+      userId,
+      accountId: dto.accountId,
+      categoryId,
+      type,
+      currency: dto.currency,
+      date,
+      timezone: dto.timezone,
+      status: "draft",
+    };
+    if (amount) {
+      createDto.amount = amount;
+    }
+    if (note) {
+      createDto.note = note;
+    }
+
+    return this.create(createDto);
   }
 }
