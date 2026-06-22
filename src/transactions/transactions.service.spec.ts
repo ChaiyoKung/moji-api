@@ -45,7 +45,7 @@ const baseDto = {
   text: "lunch at restaurant",
 };
 
-function makeAiResponse(overrides: Record<string, unknown> = {}) {
+function makeItem(overrides: Record<string, unknown> = {}) {
   return {
     type: "expense",
     amount: 150,
@@ -56,9 +56,9 @@ function makeAiResponse(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeCompletionResponse(content: unknown) {
+function makeCompletionResponse(items: unknown[]) {
   return {
-    choices: [{ message: { content: JSON.stringify(content) } }],
+    choices: [{ message: { content: JSON.stringify({ items }) } }],
   };
 }
 
@@ -102,15 +102,15 @@ describe("TransactionsService.autoCreate", () => {
     mockChatCompletionsCreate.mockReset();
   });
 
-  it("happy path (text input) — create() called with correct args and status draft", async () => {
+  it("happy path (text input) — single item, create() called with correct args and status draft", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(makeAiResponse())
+      makeCompletionResponse([makeItem()])
     );
     const createSpy = jest
       .spyOn(service, "create")
       .mockResolvedValue({} as Transaction);
 
-    await service.autoCreate(baseDto, null, "user-001");
+    const result = await service.autoCreate(baseDto, null, "user-001");
 
     expect(createSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -126,20 +126,22 @@ describe("TransactionsService.autoCreate", () => {
         note: "Lunch",
       })
     );
+    expect(result.created).toHaveLength(1);
+    expect(result.failed).toHaveLength(0);
   });
 
   it("happy path (image input) — AI returns valid data and create() is called", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(
-        makeAiResponse({ categoryId: "cat-456", type: "income" })
-      )
+      makeCompletionResponse([
+        makeItem({ categoryId: "cat-456", type: "income" }),
+      ])
     );
     const createSpy = jest
       .spyOn(service, "create")
       .mockResolvedValue({} as Transaction);
 
     const imageBuffer = Buffer.from("fake-image-data");
-    await service.autoCreate(baseDto, imageBuffer, "user-001");
+    const result = await service.autoCreate(baseDto, imageBuffer, "user-001");
 
     expect(createSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -148,11 +150,78 @@ describe("TransactionsService.autoCreate", () => {
         status: "draft",
       })
     );
+    expect(result.created).toHaveLength(1);
   });
 
-  it("date fallback — AI returns date: null, date falls back to today in dto.timezone", async () => {
+  it("multi-item happy path — all items created, failed is empty", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(makeAiResponse({ date: null }))
+      makeCompletionResponse([
+        makeItem({ note: "Pad Thai", amount: 80 }),
+        makeItem({
+          categoryId: "cat-456",
+          type: "income",
+          note: "Refund",
+          amount: 50,
+        }),
+      ])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as Transaction);
+
+    const result = await service.autoCreate(baseDto, null, "user-001");
+
+    expect(createSpy).toHaveBeenCalledTimes(2);
+    expect(result.created).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  it("partial failure — valid item created, invalid item reported in failed", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([
+        makeItem({ note: "Pad Thai" }),
+        makeItem({ categoryId: "cat-unknown", note: "Unknown item" }),
+      ])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as Transaction);
+
+    const result = await service.autoCreate(baseDto, null, "user-001");
+
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(result.created).toHaveLength(1);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].item).toBe(2);
+    expect(typeof result.failed[0].reason).toBe("string");
+  });
+
+  it("all items fail — throws UnprocessableEntityException", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([
+        makeItem({ categoryId: "cat-unknown" }),
+        makeItem({ categoryId: "cat-unknown-2" }),
+      ])
+    );
+    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
+
+    await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
+      UnprocessableEntityException
+    );
+  });
+
+  it("empty items array — throws UnprocessableEntityException", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(makeCompletionResponse([]));
+    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
+
+    await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
+      UnprocessableEntityException
+    );
+  });
+
+  it("date fallback — AI returns date: null, falls back to today in dto.timezone", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([makeItem({ date: null })])
     );
     const createSpy = jest
       .spyOn(service, "create")
@@ -169,7 +238,7 @@ describe("TransactionsService.autoCreate", () => {
 
   it("amount omitted — AI returns amount: null, createDto has no amount field", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(makeAiResponse({ amount: null }))
+      makeCompletionResponse([makeItem({ amount: null })])
     );
     const createSpy = jest
       .spyOn(service, "create")
@@ -183,7 +252,7 @@ describe("TransactionsService.autoCreate", () => {
 
   it("note omitted — AI returns note: null, createDto has no note field", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(makeAiResponse({ note: null }))
+      makeCompletionResponse([makeItem({ note: null })])
     );
     const createSpy = jest
       .spyOn(service, "create")
@@ -193,17 +262,6 @@ describe("TransactionsService.autoCreate", () => {
 
     const calledWith = createSpy.mock.calls[0][0];
     expect(calledWith).not.toHaveProperty("note");
-  });
-
-  it("categoryId not in categories — throws UnprocessableEntityException", async () => {
-    mockChatCompletionsCreate.mockResolvedValue(
-      makeCompletionResponse(makeAiResponse({ categoryId: "cat-unknown" }))
-    );
-    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
-
-    await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
-      UnprocessableEntityException
-    );
   });
 
   it("Zod parse error — AI returns invalid JSON structure, throws UnprocessableEntityException", async () => {

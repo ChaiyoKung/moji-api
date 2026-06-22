@@ -11,6 +11,7 @@ import {
   Put,
   ParseArrayPipe,
   BadRequestException,
+  HttpCode,
   UseInterceptors,
   UploadedFile,
 } from "@nestjs/common";
@@ -59,6 +60,7 @@ export class TransactionsController {
 
   @UseGuards(JwtAuthGuard)
   @Post("auto")
+  @HttpCode(207)
   @UseInterceptors(FileInterceptor("image"))
   async autoCreate(
     @Body() autoTransactionDto: AutoTransactionDto,

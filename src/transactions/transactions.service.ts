@@ -26,7 +26,7 @@ import OpenAI from "openai";
 import { z } from "zod/v4";
 import dayjs from "dayjs";
 
-const aiResponseSchema = z.object({
+const aiItemSchema = z.object({
   type: z.enum(["income", "expense"]),
   amount: z
     .number()
@@ -34,7 +34,11 @@ const aiResponseSchema = z.object({
     .transform((v) => (v !== null ? Math.round(v) : null)),
   date: z.string().nullable(),
   note: z.string().nullable(),
-  categoryId: z.string().nullable(),
+  categoryId: z.string(),
+});
+
+const aiResponseSchema = z.object({
+  items: z.array(aiItemSchema),
 });
 
 export interface FindTransactionsQueryWithUserId
@@ -390,21 +394,22 @@ export class TransactionsService {
       categories.map((c) => ({ _id: c._id, name: c.name, type: c.type }))
     );
 
-    const systemPrompt = `You are a financial transaction extractor. Analyze the provided receipt image and/or text description and extract transaction information.
+    const systemPrompt = `You are a financial transaction extractor. Analyze the provided receipt image and/or text description and extract ALL transaction line items.
 
-Available categories (pick the best matching _id):
+Available categories (pick the best matching _id for each item):
 ${categoriesJson}
 
 You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no explanation, no text before or after. Start your response with { and end with }.
 
 Required JSON format:
-{"type":"income"|"expense","amount":number|null,"date":"YYYY-MM-DD"|null,"note":"string"|null,"categoryId":"string"}
+{"items":[{"type":"income"|"expense","amount":number|null,"date":"YYYY-MM-DD"|null,"note":"string"|null,"categoryId":"string"}]}
 
 Rules:
+- Extract every distinct line item as a separate entry in "items".
 - type: "expense" for purchases/payments, "income" for salary/refunds/income
-- amount: total amount as an integer (no currency symbol, no decimals — round if needed), null if unclear
-- date: transaction date as YYYY-MM-DD, null if not found
-- note: short 1-line description of what was purchased/received
+- amount: the line item amount as an integer (no currency symbol, no decimals — round if needed), null if unclear
+- date: transaction date as YYYY-MM-DD, null if not found (all items may share the same receipt date)
+- note: short 1-line description of the specific line item
 - categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
 - Do NOT wrap output in markdown code fences or any other formatting`;
 
@@ -443,37 +448,71 @@ Rules:
         "AI response did not match expected schema"
       );
     }
-    const { type, amount, note, categoryId } = parseResult.data;
-    let { date } = parseResult.data;
 
-    const categoryExists = categories.some((c) => String(c._id) === categoryId);
-    if (!categoryId || !categoryExists) {
-      throw new UnprocessableEntityException(
-        "AI returned a categoryId that does not match any of the user's categories"
+    const { items } = parseResult.data;
+    if (items.length === 0) {
+      throw new UnprocessableEntityException("AI returned no items");
+    }
+
+    const created: Transaction[] = [];
+    const failed: { item: number; reason: string }[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const itemNum = i + 1;
+
+      const categoryExists = categories.some(
+        (c) => String(c._id) === item.categoryId
       );
+      if (!categoryExists) {
+        failed.push({
+          item: itemNum,
+          reason:
+            "AI returned a categoryId that does not match any of the user's categories",
+        });
+        continue;
+      }
+
+      const date = item.date ?? dayjs().tz(dto.timezone).format("YYYY-MM-DD");
+
+      const createDto: CreateTransactionDto = {
+        userId,
+        accountId: dto.accountId,
+        categoryId: item.categoryId,
+        type: item.type,
+        currency: dto.currency,
+        date,
+        timezone: dto.timezone,
+        status: "draft",
+      };
+      if (item.amount) {
+        createDto.amount = item.amount;
+      }
+      if (item.note) {
+        createDto.note = item.note;
+      }
+
+      try {
+        const transaction = await this.create(createDto);
+        created.push(transaction);
+      } catch (error) {
+        failed.push({
+          item: itemNum,
+          reason:
+            error instanceof Error
+              ? error.message
+              : "Failed to create transaction",
+        });
+      }
     }
 
-    if (!date) {
-      date = dayjs().tz(dto.timezone).format("YYYY-MM-DD");
+    if (created.length === 0) {
+      throw new UnprocessableEntityException({
+        message: "All items failed to be created",
+        failed,
+      });
     }
 
-    const createDto: CreateTransactionDto = {
-      userId,
-      accountId: dto.accountId,
-      categoryId,
-      type,
-      currency: dto.currency,
-      date,
-      timezone: dto.timezone,
-      status: "draft",
-    };
-    if (amount) {
-      createDto.amount = amount;
-    }
-    if (note) {
-      createDto.note = note;
-    }
-
-    return this.create(createDto);
+    return { created, failed };
   }
 }
