@@ -475,6 +475,7 @@ Rules:
         date,
         timezone: dto.timezone,
         status: "draft",
+        aiModel: model,
       };
       if (item.amount) {
         createDto.amount = item.amount;

@@ -124,6 +124,7 @@ describe("TransactionsService.autoCreate", () => {
         status: "draft",
         amount: 150,
         note: "Lunch",
+        aiModel: "test-model",
       })
     );
     expect(result.created).toHaveLength(1);
@@ -148,6 +149,7 @@ describe("TransactionsService.autoCreate", () => {
         categoryId: "cat-456",
         type: "income",
         status: "draft",
+        aiModel: "test-model",
       })
     );
     expect(result.created).toHaveLength(1);
@@ -232,7 +234,7 @@ describe("TransactionsService.autoCreate", () => {
     await service.autoCreate(baseDto, null, "user-001");
 
     expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ date: expectedDate })
+      expect.objectContaining({ date: expectedDate, aiModel: "test-model" })
     );
   });
 

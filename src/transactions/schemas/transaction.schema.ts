@@ -39,6 +39,9 @@ export class Transaction {
 
   @Prop({ type: String, default: "confirmed" })
   status?: "draft" | "confirmed";
+
+  @Prop({ type: String })
+  aiModel?: string;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

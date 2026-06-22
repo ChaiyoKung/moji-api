@@ -48,4 +48,8 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsEnum(["draft", "confirmed"])
   status?: "draft" | "confirmed";
+
+  @IsOptional()
+  @IsString()
+  aiModel?: string;
 }
