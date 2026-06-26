@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { TransactionsService } from "./transactions.service";
-import { Transaction } from "./schemas/transaction.schema";
+import { Transaction, TransactionDocument } from "./schemas/transaction.schema";
 import { Account } from "../accounts/schemas/account.schema";
 import { CategoriesService } from "../categories/categories.service";
 
@@ -108,7 +108,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     const result = await service.autoCreate(baseDto, null, "user-001");
 
@@ -139,7 +139,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     const imageBuffer = Buffer.from("fake-image-data");
     const result = await service.autoCreate(baseDto, imageBuffer, "user-001");
@@ -169,7 +169,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     const result = await service.autoCreate(baseDto, null, "user-001");
 
@@ -187,7 +187,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     const result = await service.autoCreate(baseDto, null, "user-001");
 
@@ -205,7 +205,7 @@ describe("TransactionsService.autoCreate", () => {
         makeItem({ categoryId: "cat-unknown-2" }),
       ])
     );
-    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
+    jest.spyOn(service, "create").mockResolvedValue({} as TransactionDocument);
 
     await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
       UnprocessableEntityException
@@ -214,7 +214,7 @@ describe("TransactionsService.autoCreate", () => {
 
   it("empty items array — throws UnprocessableEntityException", async () => {
     mockChatCompletionsCreate.mockResolvedValue(makeCompletionResponse([]));
-    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
+    jest.spyOn(service, "create").mockResolvedValue({} as TransactionDocument);
 
     await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
       UnprocessableEntityException
@@ -227,7 +227,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     const expectedDate = dayjs().tz("Asia/Bangkok").format("YYYY-MM-DD");
 
@@ -244,7 +244,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     await service.autoCreate(baseDto, null, "user-001");
 
@@ -258,7 +258,7 @@ describe("TransactionsService.autoCreate", () => {
     );
     const createSpy = jest
       .spyOn(service, "create")
-      .mockResolvedValue({} as Transaction);
+      .mockResolvedValue({} as TransactionDocument);
 
     await service.autoCreate(baseDto, null, "user-001");
 
@@ -270,7 +270,7 @@ describe("TransactionsService.autoCreate", () => {
     mockChatCompletionsCreate.mockResolvedValue({
       choices: [{ message: { content: JSON.stringify({ amount: 100 }) } }],
     });
-    jest.spyOn(service, "create").mockResolvedValue({} as Transaction);
+    jest.spyOn(service, "create").mockResolvedValue({} as TransactionDocument);
 
     await expect(service.autoCreate(baseDto, null, "user-001")).rejects.toThrow(
       UnprocessableEntityException

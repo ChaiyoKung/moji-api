@@ -13,7 +13,7 @@ import mongoose, {
   QuerySelector,
   RootFilterQuery,
 } from "mongoose";
-import { Transaction } from "./schemas/transaction.schema";
+import { Transaction, TransactionDocument } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
@@ -60,7 +60,7 @@ export class TransactionsService {
   private async insertTransactionWithBalanceUpdate(
     dto: CreateTransactionDto,
     session: mongoose.ClientSession
-  ): Promise<Transaction> {
+  ): Promise<TransactionDocument> {
     // Convert date string and timezone to Date object
     const { date, timezone, status = "confirmed", ...rest } = dto;
     const dateObj = dayjs.tz(date, timezone).utc().toDate();
@@ -489,7 +489,7 @@ Rules:
 
     const results = await Promise.allSettled(promises);
 
-    const created: Transaction[] = [];
+    const created: TransactionDocument[] = [];
     const failed: { item: number; reason: string }[] = [];
 
     for (let i = 0; i < results.length; i++) {
