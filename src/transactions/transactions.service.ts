@@ -447,8 +447,20 @@ Rules:
       response_format: { type: "json_object" },
     });
 
+    if (!response.choices) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain choices"
+      );
+    }
+
     if (response.choices.length === 0) {
       throw new UnprocessableEntityException("AI did not return any choices");
+    }
+
+    if (!response.choices[0].message) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain a message"
+      );
     }
 
     if (!response.choices[0].message.content) {
