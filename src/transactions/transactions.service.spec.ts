@@ -276,4 +276,45 @@ describe("TransactionsService.autoCreate", () => {
       UnprocessableEntityException
     );
   });
+
+  describe("system prompt — time-aware meal disambiguation", () => {
+    beforeEach(() => {
+      mockChatCompletionsCreate.mockReset();
+    });
+
+    async function getSystemPrompt(): Promise<string> {
+      mockChatCompletionsCreate.mockResolvedValue(
+        makeCompletionResponse([makeItem()])
+      );
+      jest
+        .spyOn(service, "create")
+        .mockResolvedValue({} as TransactionDocument);
+
+      await service.autoCreate(baseDto, null, "user-001");
+
+      const calls = mockChatCompletionsCreate.mock.calls as Array<
+        [{ messages: Array<{ content: string }> }]
+      >;
+      return calls[0][0].messages[0].content;
+    }
+
+    it("prompt includes timezone", async () => {
+      const systemPrompt = await getSystemPrompt();
+      expect(systemPrompt).toContain("Timezone: Asia/Bangkok");
+    });
+
+    it("prompt includes current local datetime", async () => {
+      const expectedNow = dayjs().tz("Asia/Bangkok").format("YYYY-MM-DD HH:mm");
+      const systemPrompt = await getSystemPrompt();
+      expect(systemPrompt).toContain(`Current local date/time: ${expectedNow}`);
+    });
+
+    it("prompt includes all meal window rules", async () => {
+      const systemPrompt = await getSystemPrompt();
+      expect(systemPrompt).toContain("breakfast: 05:00-11:59");
+      expect(systemPrompt).toContain("lunch: 12:00-16:59");
+      expect(systemPrompt).toContain("dinner: 17:00-23:59");
+      expect(systemPrompt).toContain("00:00-04:59");
+    });
+  });
 });
