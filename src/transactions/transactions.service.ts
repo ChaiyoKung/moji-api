@@ -454,7 +454,9 @@ Rules:
     }
 
     if (response.choices.length === 0) {
-      throw new UnprocessableEntityException("AI did not return any choices");
+      throw new UnprocessableEntityException(
+        "AI response did not contain any choices"
+      );
     }
 
     if (!response.choices[0].message) {
