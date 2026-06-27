@@ -446,6 +446,7 @@ Rules:
       ],
       response_format: { type: "json_object" },
     });
+    this.logger.debug(`AI response: ${JSON.stringify(response)}`);
 
     if (!response.choices) {
       throw new UnprocessableEntityException(
