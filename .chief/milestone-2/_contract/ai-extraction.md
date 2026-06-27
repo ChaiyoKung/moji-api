@@ -7,6 +7,7 @@ Unchanged from milestone 1 — `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODE
 ## AI Prompt Changes
 
 The system prompt must instruct the AI to extract **all line items** from the receipt/text as an array.
+The system prompt must also include the user's current local date/time, derived from the request timezone, so the model can disambiguate meal-based categories when explicit meal-time clues are missing.
 
 ### System Prompt Structure
 
@@ -36,6 +37,13 @@ Rules:
 - date: the transaction date in YYYY-MM-DD format, null if not found (all items may share the same receipt date).
 - note: a short 1-line description of the specific line item.
 - categoryId: pick the _id of the most relevant category from the list. Must be a valid _id from the list.
+- Use explicit meal-time clues from the text/image when they exist.
+- If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time to choose the category.
+- Meal-time windows for current-time disambiguation are:
+  - breakfast: `05:00-11:59`
+  - lunch: `12:00-16:59`
+  - dinner: `17:00-23:59`
+- If the user's local time is `00:00-04:59`, avoid meal-based disambiguation and fall back to the closest non-meal clue.
 ```
 
 ## AI Response Zod Schema
@@ -61,6 +69,12 @@ const aiResponseSchema = z.object({
 3. If `date` is null → fall back to today's date in `dto.timezone` formatted as `"YYYY-MM-DD"`.
 4. If `amount` is null → omit `amount` field from `CreateTransactionDto`.
 5. If `note` is null → omit `note` field from `CreateTransactionDto`.
+
+## Prompt Context Requirements
+
+1. `TransactionsService.autoCreate()` must compute the user's current local datetime using `dto.timezone`.
+2. The system prompt must include both the IANA timezone string and the computed local datetime value.
+3. The prompt must tell the AI to use that local datetime only when explicit meal-time clues are absent.
 
 ## Empty Items Rule
 

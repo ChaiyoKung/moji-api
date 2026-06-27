@@ -37,6 +37,16 @@ The endpoint always returns:
 - HTTP `207 Multi-Status` when at least one transaction is created.
 - HTTP `422 Unprocessable Entity` when all items fail OR AI returns empty array.
 
+### G5 — Time-aware meal category disambiguation
+When `POST /transactions/auto` receives ambiguous food text or images without an explicit meal-time clue, the AI prompt must include the user's current local date/time derived from the request timezone and instruct the model to use it for meal-based category selection.
+
+- If the text/image explicitly indicates a meal time, that explicit clue wins.
+- If the text/image is ambiguous and meal categories differ only by meal period, the AI must choose based on the user's current local time using these windows:
+  - breakfast: `05:00-11:59`
+  - lunch: `12:00-16:59`
+  - dinner: `17:00-23:59`
+- If the user's current local time is `00:00-04:59`, the AI must avoid meal-based disambiguation and fall back to the closest non-meal clue.
+
 ## Out of Scope
 - No changes to `PUT /transactions/:id` or any other endpoint.
 - No new module — still lives inside `TransactionsModule`.
