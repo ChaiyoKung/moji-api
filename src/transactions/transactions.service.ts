@@ -394,7 +394,14 @@ export class TransactionsService {
       categories.map((c) => ({ _id: c._id, name: c.name, type: c.type }))
     );
 
+    const nowLocal = dayjs().tz(dto.timezone);
+    const nowLocalStr = nowLocal.format("YYYY-MM-DD HH:mm");
+
     const systemPrompt = `You are a financial transaction extractor. Analyze the provided receipt image and/or text description and extract ALL transaction line items.
+
+User context:
+- Timezone: ${dto.timezone}
+- Current local date/time: ${nowLocalStr}
 
 Available categories (pick the best matching _id for each item):
 ${categoriesJson}
@@ -411,6 +418,12 @@ Rules:
 - date: transaction date as YYYY-MM-DD, null if not found (all items may share the same receipt date)
 - note: short 1-line description of the specific line item
 - categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
+- If the text/image explicitly indicates a meal time (e.g. "breakfast", "lunch", "dinner"), use that clue to select the category.
+- If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time above to choose:
+  - breakfast: 05:00-11:59
+  - lunch: 12:00-16:59
+  - dinner: 17:00-23:59
+- If the user's current local time is 00:00-04:59, avoid meal-based disambiguation and fall back to the closest non-meal clue.
 - Do NOT wrap output in markdown code fences or any other formatting`;
 
     const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
