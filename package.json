@@ -1,6 +1,6 @@
 {
   "name": "moji-api",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "The backend service for Moji, a minimal and friendly expense tracker app to help you stay mindful with your money — with a touch of charm.",
   "author": "ChaiyoKung (https://github.com/ChaiyoKung)",
   "private": true,
