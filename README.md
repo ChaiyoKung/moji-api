@@ -29,23 +29,23 @@ docker push chaiyokung/moji-api:latest
 ```ts
 {
   _id: ObjectId,
-  email: String,                   // อีเมล (unique)
-  displayName: String,             // ชื่อที่แสดง
+  email: String,                   // อีเมล (unique, required)
+  displayName: String,             // ชื่อที่แสดง (required)
   avatarUrl?: String,              // ลิงก์รูปโปรไฟล์ (optional)
   providers: [                     // รายการ OAuth2 providers ที่เชื่อมต่อ
     {
-      provider: String,            // เช่น "google", "facebook"
-      providerId: String,          // user id จาก provider นั้น
-      linkedAt: Date               // วันที่เชื่อมต่อ provider นี้
+      provider: String,            // เช่น "google", "facebook" (required)
+      providerId: String,          // user id จาก provider นั้น (required)
+      linkedAt: Date               // วันที่เชื่อมต่อ provider นี้ (required)
     }
   ],
-  createdAt: Date,                 // วันที่สมัคร
-  updatedAt: Date,                 // วันที่แก้ไขล่าสุด
   settings?: {                     // การตั้งค่าส่วนตัว (optional)
     currency?: String,             // สกุลเงินหลัก เช่น "THB"
     language?: String              // ภาษา เช่น "th"
   },
-  refreshTokens?: [String]         // refresh token ที่ยังใช้ได้ (optional)
+  refreshTokens: [String],         // refresh token ที่ยังใช้ได้ (default: [])
+  createdAt: Date,                 // วันที่สมัคร (auto)
+  updatedAt: Date                  // วันที่แก้ไขล่าสุด (auto)
 }
 ```
 
@@ -74,14 +74,14 @@ docker push chaiyokung/moji-api:latest
 ```ts
 {
   _id: ObjectId,
-  userId: ObjectId,            // อ้างอิงไปยัง users._id (null ถ้าเป็น global category)
-  name: String,                // ชื่อหมวดหมู่ เช่น "อาหาร", "เดินทาง"
-  type: String,                // "income" หรือ "expense"
+  userId: ObjectId | null,     // อ้างอิงไปยัง users._id (null ถ้าเป็น global category, default: null)
+  name: String,                // ชื่อหมวดหมู่ เช่น "อาหาร", "เดินทาง" (required)
+  type: String,                // "income" หรือ "expense" (required)
   icon?: String,               // ไอคอนหมวดหมู่ (optional)
   color?: String,              // สีประจำหมวดหมู่ (optional)
-  parentId?: ObjectId,         // อ้างอิงหมวดหมู่หลัก (optional, สำหรับหมวดหมู่ย่อย)
-  createdAt: Date,             // วันที่สร้าง
-  updatedAt: Date              // วันที่แก้ไขล่าสุด
+  parentId?: ObjectId | null,  // อ้างอิงหมวดหมู่หลัก (optional, สำหรับหมวดหมู่ย่อย, default: null)
+  createdAt: Date,             // วันที่สร้าง (auto)
+  updatedAt: Date              // วันที่แก้ไขล่าสุด (auto)
 }
 ```
 
@@ -92,16 +92,17 @@ docker push chaiyokung/moji-api:latest
 ```ts
 {
   _id: ObjectId,
-  userId: ObjectId,            // อ้างอิงไปยัง users._id
-  accountId: ObjectId,         // อ้างอิงไปยัง accounts._id
-  categoryId: ObjectId,        // อ้างอิงไปยัง categories._id
-  type: String,                // "income" หรือ "expense"
-  amount?: Number,             // จำนวนเงิน
-  currency: String,            // สกุลเงิน เช่น "THB"
+  userId: ObjectId,            // อ้างอิงไปยัง users._id (required)
+  accountId: ObjectId,         // อ้างอิงไปยัง accounts._id (required)
+  categoryId: ObjectId,        // อ้างอิงไปยัง categories._id (required)
+  type: String,                // "income" หรือ "expense" (required)
+  amount?: Number,             // จำนวนเงิน (optional)
+  currency: String,            // สกุลเงิน เช่น "THB" (required)
   note?: String,               // หมายเหตุ (optional)
-  date: Date,                  // วันที่ทำรายการ
-  status?: String,             // สถานะ (optional)
-  createdAt: Date,             // วันที่สร้างรายการ
-  updatedAt: Date              // วันที่แก้ไขล่าสุด
+  date: Date,                  // วันที่ทำรายการ (required)
+  status: String,              // "draft" หรือ "confirmed" (default: "confirmed")
+  aiModel?: String,            // โมเดล AI ที่ใช้สร้างรายการ (optional)
+  createdAt: Date,             // วันที่สร้างรายการ (auto)
+  updatedAt: Date              // วันที่แก้ไขล่าสุด (auto)
 }
 ```
