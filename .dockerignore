@@ -3,6 +3,7 @@ dist
 *.log
 *.md
 .git
+.gitignore
 scripts
 Dockerfile
 docker-compose.yml
