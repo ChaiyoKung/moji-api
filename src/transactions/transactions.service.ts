@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, {
@@ -12,13 +13,33 @@ import mongoose, {
   QuerySelector,
   RootFilterQuery,
 } from "mongoose";
-import { Transaction } from "./schemas/transaction.schema";
+import { Transaction, TransactionDocument } from "./schemas/transaction.schema";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/update-transaction.dto";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
+import { AutoTransactionDto } from "./dto/auto-transaction.dto";
 import { Account } from "../accounts/schemas/account.schema";
 import { CategoryDocument } from "../categories/schemas/category.schema";
+import { CategoriesService } from "../categories/categories.service";
+import { ConfigService } from "@nestjs/config";
+import OpenAI from "openai";
+import { z } from "zod/v4";
 import dayjs from "dayjs";
+
+const aiItemSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  amount: z
+    .number()
+    .nullable()
+    .transform((v) => (v !== null ? Math.round(v) : null)),
+  date: z.string().nullable(),
+  note: z.string().nullable(),
+  categoryId: z.string(),
+});
+
+const aiResponseSchema = z.object({
+  items: z.array(aiItemSchema),
+});
 
 export interface FindTransactionsQueryWithUserId
   extends FindTransactionsQueryDto {
@@ -31,13 +52,15 @@ export class TransactionsService {
 
   constructor(
     @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
-    @InjectModel(Account.name) private accountModel: Model<Account>
+    @InjectModel(Account.name) private accountModel: Model<Account>,
+    private categoriesService: CategoriesService,
+    private configService: ConfigService
   ) {}
 
   private async insertTransactionWithBalanceUpdate(
     dto: CreateTransactionDto,
     session: mongoose.ClientSession
-  ): Promise<Transaction> {
+  ): Promise<TransactionDocument> {
     // Convert date string and timezone to Date object
     const { date, timezone, status = "confirmed", ...rest } = dto;
     const dateObj = dayjs.tz(date, timezone).utc().toDate();
@@ -349,5 +372,182 @@ export class TransactionsService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async autoCreate(
+    dto: AutoTransactionDto,
+    imageBuffer: Buffer | null,
+    userId: string
+  ) {
+    const categories = await this.categoriesService.findAllForUser(userId);
+
+    const client = new OpenAI({
+      baseURL: this.configService.get<string>("OPENAI_BASE_URL"),
+      apiKey: this.configService.get<string>("OPENAI_API_KEY"),
+    });
+    const model = this.configService.get<string>(
+      "TRANSACTION_AUTO_OPENAI_MODEL",
+      "gemini-3.5-flash"
+    );
+
+    const categoriesJson = JSON.stringify(
+      categories.map((c) => ({ _id: c._id, name: c.name, type: c.type }))
+    );
+
+    const nowLocal = dayjs().tz(dto.timezone);
+    const nowLocalStr = nowLocal.format("YYYY-MM-DD HH:mm");
+
+    const systemPrompt = `You are a financial transaction extractor. Analyze the provided receipt image and/or text description and extract ALL transaction line items.
+
+User context:
+- Timezone: ${dto.timezone}
+- Current local date/time: ${nowLocalStr}
+
+Available categories (pick the best matching _id for each item):
+${categoriesJson}
+
+You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no explanation, no text before or after. Start your response with { and end with }.
+
+Required JSON format:
+{"items":[{"type":"income"|"expense","amount":number|null,"date":"YYYY-MM-DD"|null,"note":"string"|null,"categoryId":"string"}]}
+
+Rules:
+- Extract every distinct line item as a separate entry in "items".
+- type: "expense" for purchases/payments, "income" for salary/refunds/income
+- amount: the line item amount as an integer (no currency symbol, no decimals — round if needed), null if unclear
+- date: transaction date as YYYY-MM-DD, null if not found (all items may share the same receipt date)
+- note: short 1-line description of the specific line item
+- categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
+- If the text/image explicitly indicates a meal time (e.g. "breakfast", "lunch", "dinner"), use that clue to select the category.
+- If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time above to choose:
+  - breakfast: 05:00-11:59
+  - lunch: 12:00-16:59
+  - dinner: 17:00-23:59
+- If the user's current local time is 00:00-04:59, avoid meal-based disambiguation and fall back to the closest non-meal clue.
+- Do NOT wrap output in markdown code fences or any other formatting`;
+
+    const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    if (dto.text) {
+      userContent.push({ type: "text", text: dto.text });
+    }
+    if (imageBuffer) {
+      const base64 = imageBuffer.toString("base64");
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:image/jpeg;base64,${base64}` },
+      });
+    }
+
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      response_format: { type: "json_object" },
+    });
+    this.logger.debug(`AI response: ${JSON.stringify(response)}`);
+
+    if (!response.choices) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain choices"
+      );
+    }
+
+    if (response.choices.length === 0) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain any choices"
+      );
+    }
+
+    if (!response.choices[0].message) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain a message"
+      );
+    }
+
+    if (!response.choices[0].message.content) {
+      throw new UnprocessableEntityException(
+        "AI response did not contain any content"
+      );
+    }
+
+    const parseResult = aiResponseSchema.safeParse(
+      JSON.parse(response.choices[0].message.content)
+    );
+    if (!parseResult.success) {
+      throw new UnprocessableEntityException(
+        "AI response did not match expected schema"
+      );
+    }
+
+    const { items } = parseResult.data;
+    if (items.length === 0) {
+      throw new UnprocessableEntityException("AI returned no items");
+    }
+
+    const promises = items.map(async (item) => {
+      const categoryExists = categories.some(
+        (c) => String(c._id) === item.categoryId
+      );
+      if (!categoryExists) {
+        throw new Error(
+          "AI returned a categoryId that does not match any of the user's categories"
+        );
+      }
+
+      const date = item.date ?? dayjs().tz(dto.timezone).format("YYYY-MM-DD");
+
+      const createDto: CreateTransactionDto = {
+        userId,
+        accountId: dto.accountId,
+        categoryId: item.categoryId,
+        type: item.type,
+        currency: dto.currency,
+        date,
+        timezone: dto.timezone,
+        status: "draft",
+        aiModel: model,
+      };
+      if (item.amount) {
+        createDto.amount = item.amount;
+      }
+      if (item.note) {
+        createDto.note = item.note;
+      }
+
+      return this.create(createDto);
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    const created: TransactionDocument[] = [];
+    const failed: { item: number; reason: string }[] = [];
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const itemNum = i + 1;
+
+      if (result.status === "fulfilled") {
+        created.push(result.value);
+      } else {
+        failed.push({
+          item: itemNum,
+          reason:
+            result.reason instanceof Error
+              ? result.reason.message
+              : "Failed to create transaction",
+        });
+      }
+    }
+
+    if (created.length === 0) {
+      throw new UnprocessableEntityException({
+        message: "All items failed to be created",
+        failed,
+      });
+    }
+
+    return { created, failed };
   }
 }

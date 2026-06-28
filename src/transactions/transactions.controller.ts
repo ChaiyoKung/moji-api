@@ -11,10 +11,16 @@ import {
   Put,
   ParseArrayPipe,
   BadRequestException,
+  HttpCode,
+  UseInterceptors,
+  UploadedFile,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import "multer";
 import { TransactionsService } from "./transactions.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/update-transaction.dto";
+import { AutoTransactionDto } from "./dto/auto-transaction.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { FindTransactionsQueryDto } from "./dto/find-transactions-query.dto";
 import { Request } from "express";
@@ -50,6 +56,28 @@ export class TransactionsController {
       ...query,
       userId: req.user.userId,
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("auto")
+  @HttpCode(207)
+  @UseInterceptors(FileInterceptor("image"))
+  async autoCreate(
+    @Body() autoTransactionDto: AutoTransactionDto,
+    @UploadedFile() image: Express.Multer.File | undefined,
+    @Req() req: Request
+  ) {
+    if (!image && !autoTransactionDto.text) {
+      throw new BadRequestException(
+        "At least one of image or text must be provided"
+      );
+    }
+    const imageBuffer = image ? image.buffer : null;
+    return this.transactionsService.autoCreate(
+      autoTransactionDto,
+      imageBuffer,
+      req.user.userId
+    );
   }
 
   @UseGuards(JwtAuthGuard)
