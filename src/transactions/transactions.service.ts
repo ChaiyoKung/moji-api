@@ -386,7 +386,7 @@ export class TransactionsService {
       apiKey: this.configService.get<string>("OPENAI_API_KEY"),
     });
     const model = this.configService.get<string>(
-      "OPENAI_MODEL",
+      "TRANSACTION_AUTO_OPENAI_MODEL",
       "gemini-3.5-flash"
     );
 

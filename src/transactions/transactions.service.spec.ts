@@ -76,7 +76,7 @@ describe("TransactionsService.autoCreate", () => {
         const map: Record<string, string> = {
           OPENAI_BASE_URL: "https://api.example.com",
           OPENAI_API_KEY: "test-key",
-          OPENAI_MODEL: "test-model",
+          TRANSACTION_AUTO_OPENAI_MODEL: "test-model",
         };
         return map[key] ?? defaultVal;
       }),
