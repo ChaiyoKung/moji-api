@@ -131,6 +131,40 @@ describe("TransactionsService.autoCreate", () => {
     expect(result.failed).toHaveLength(0);
   });
 
+  it("status omitted — defaults to draft", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([makeItem()])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as TransactionDocument);
+
+    await service.autoCreate({ ...baseDto }, null, "user-001");
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "draft" })
+    );
+  });
+
+  it("status confirmed — passes confirmed through to create()", async () => {
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([makeItem()])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as TransactionDocument);
+
+    await service.autoCreate(
+      { ...baseDto, status: "confirmed" },
+      null,
+      "user-001"
+    );
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "confirmed" })
+    );
+  });
+
   it("happy path (image input) — AI returns valid data and create() is called", async () => {
     mockChatCompletionsCreate.mockResolvedValue(
       makeCompletionResponse([
