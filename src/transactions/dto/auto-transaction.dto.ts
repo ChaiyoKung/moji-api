@@ -1,4 +1,4 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class AutoTransactionDto {
   @IsMongoId()
@@ -16,4 +16,8 @@ export class AutoTransactionDto {
   @IsOptional()
   @IsString()
   text?: string;
+
+  @IsOptional()
+  @IsEnum(["draft", "confirmed"])
+  status?: "draft" | "confirmed";
 }

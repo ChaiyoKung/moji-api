@@ -506,7 +506,7 @@ Rules:
         currency: dto.currency,
         date,
         timezone: dto.timezone,
-        status: "draft",
+        status: dto.status ?? "draft",
         aiModel: model,
       };
       if (item.amount) {
