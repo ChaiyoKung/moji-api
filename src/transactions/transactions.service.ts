@@ -486,56 +486,51 @@ Rules:
       throw new UnprocessableEntityException("AI returned no items");
     }
 
-    const promises = items.map(async (item) => {
-      const categoryExists = categories.some(
-        (c) => String(c._id) === item.categoryId
-      );
-      if (!categoryExists) {
-        throw new Error(
-          "AI returned a categoryId that does not match any of the user's categories"
-        );
-      }
-
-      const date = item.date ?? dayjs().tz(dto.timezone).format("YYYY-MM-DD");
-
-      const createDto: CreateTransactionDto = {
-        userId,
-        accountId: dto.accountId,
-        categoryId: item.categoryId,
-        type: item.type,
-        currency: dto.currency,
-        date,
-        timezone: dto.timezone,
-        status: dto.status ?? "draft",
-        aiModel: model,
-      };
-      if (item.amount) {
-        createDto.amount = item.amount;
-      }
-      if (item.note) {
-        createDto.note = item.note;
-      }
-
-      return this.create(createDto);
-    });
-
-    const results = await Promise.allSettled(promises);
-
     const created: TransactionDocument[] = [];
     const failed: { item: number; reason: string }[] = [];
 
-    for (let i = 0; i < results.length; i++) {
-      const result = results[i];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       const itemNum = i + 1;
 
-      if (result.status === "fulfilled") {
-        created.push(result.value);
-      } else {
+      try {
+        const categoryExists = categories.some(
+          (c) => String(c._id) === item.categoryId
+        );
+        if (!categoryExists) {
+          throw new Error(
+            "AI returned a categoryId that does not match any of the user's categories"
+          );
+        }
+
+        const date = item.date ?? dayjs().tz(dto.timezone).format("YYYY-MM-DD");
+
+        const createDto: CreateTransactionDto = {
+          userId,
+          accountId: dto.accountId,
+          categoryId: item.categoryId,
+          type: item.type,
+          currency: dto.currency,
+          date,
+          timezone: dto.timezone,
+          status: dto.status ?? "draft",
+          aiModel: model,
+        };
+        if (item.amount) {
+          createDto.amount = item.amount;
+        }
+        if (item.note) {
+          createDto.note = item.note;
+        }
+
+        const result = await this.create(createDto);
+        created.push(result);
+      } catch (error) {
         failed.push({
           item: itemNum,
           reason:
-            result.reason instanceof Error
-              ? result.reason.message
+            error instanceof Error
+              ? error.message
               : "Failed to create transaction",
         });
       }
