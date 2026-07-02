@@ -482,6 +482,7 @@ Rules:
     }
 
     const { items } = parseResult.data;
+    const categoryIdSet = new Set(categories.map((c) => String(c._id)));
     if (items.length === 0) {
       throw new UnprocessableEntityException("AI returned no items");
     }
@@ -494,9 +495,7 @@ Rules:
       const itemNum = i + 1;
 
       try {
-        const categoryExists = categories.some(
-          (c) => String(c._id) === item.categoryId
-        );
+        const categoryExists = categoryIdSet.has(item.categoryId);
         if (!categoryExists) {
           throw new Error(
             "AI returned a categoryId that does not match any of the user's categories"
