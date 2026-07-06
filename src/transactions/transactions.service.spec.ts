@@ -311,6 +311,52 @@ describe("TransactionsService.autoCreate", () => {
     );
   });
 
+  it("quantity expansion x2 — 'cola x2 50 thb' returns 2 identical items, creates 2 transactions with correct amount", async () => {
+    const colaItem = makeItem({ note: "cola", amount: 25 });
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([colaItem, colaItem])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as TransactionDocument);
+
+    const result = await service.autoCreate(
+      { ...baseDto, text: "cola x2 50 thb" },
+      null,
+      "user-001"
+    );
+
+    expect(createSpy).toHaveBeenCalledTimes(2);
+    expect(result.created).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+    for (const call of createSpy.mock.calls) {
+      expect(call[0]).toMatchObject({ note: "cola", amount: 25 });
+    }
+  });
+
+  it("quantity expansion x3 — 'donus x3 90 thb' returns 3 identical items, creates 3 transactions with correct amount", async () => {
+    const donusItem = makeItem({ note: "donus", amount: 30 });
+    mockChatCompletionsCreate.mockResolvedValue(
+      makeCompletionResponse([donusItem, donusItem, donusItem])
+    );
+    const createSpy = jest
+      .spyOn(service, "create")
+      .mockResolvedValue({} as TransactionDocument);
+
+    const result = await service.autoCreate(
+      { ...baseDto, text: "donus x3 90 thb" },
+      null,
+      "user-001"
+    );
+
+    expect(createSpy).toHaveBeenCalledTimes(3);
+    expect(result.created).toHaveLength(3);
+    expect(result.failed).toHaveLength(0);
+    for (const call of createSpy.mock.calls) {
+      expect(call[0]).toMatchObject({ note: "donus", amount: 30 });
+    }
+  });
+
   describe("system prompt — time-aware meal disambiguation", () => {
     beforeEach(() => {
       mockChatCompletionsCreate.mockReset();
