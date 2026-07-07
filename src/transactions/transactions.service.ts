@@ -424,6 +424,14 @@ Rules:
   - lunch: 12:00-16:59
   - dinner: 17:00-23:59
 - If the user's current local time is 00:00-04:59, avoid meal-based disambiguation and fall back to the closest non-meal clue.
+Quantity expansion rules:
+- If an item specifies a quantity (e.g. "cola x2", "x3 donus", "2x cola", "cola (2)", "cola 2 pcs", "cola qty:2", "cola 2nos"), treat the given amount as the TOTAL for all units.
+- Expand that item into exactly N separate entries in "items", each with amount = round(total / N).
+- All N entries share the same note, date, type, and categoryId.
+- The note must contain only the item name — strip any quantity indicator (e.g. "cola x2" → note: "cola", "2x donus" → note: "donus").
+- If N = 1, emit exactly one entry (no expansion needed).
+- If total / N is not a whole number, round each entry to the nearest integer using standard rounding (0.5 rounds up).
+- Items with no quantity indicator are extracted as a single entry (existing behavior, unchanged).
 - Do NOT wrap output in markdown code fences or any other formatting`;
 
     const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
