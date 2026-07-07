@@ -397,4 +397,60 @@ describe("TransactionsService.autoCreate", () => {
       expect(systemPrompt).toContain("00:00-04:59");
     });
   });
+
+  describe("system prompt rule — note omitted when AI returns null for matched category name", () => {
+    it("AI returns note: null (input 'food' matched to category 'Food') → transaction created without note field", async () => {
+      mockChatCompletionsCreate.mockResolvedValue(
+        makeCompletionResponse([makeItem({ note: null })])
+      );
+      const createSpy = jest
+        .spyOn(service, "create")
+        .mockResolvedValue({} as TransactionDocument);
+
+      await service.autoCreate(
+        { ...baseDto, text: "food" },
+        null,
+        "user-001"
+      );
+
+      const calledWith = createSpy.mock.calls[0][0];
+      expect(calledWith).not.toHaveProperty("note");
+    });
+
+    it("AI returns note: null (input 'food expenses' matched to category 'Food') → transaction created without note field", async () => {
+      mockChatCompletionsCreate.mockResolvedValue(
+        makeCompletionResponse([makeItem({ note: null })])
+      );
+      const createSpy = jest
+        .spyOn(service, "create")
+        .mockResolvedValue({} as TransactionDocument);
+
+      await service.autoCreate(
+        { ...baseDto, text: "food expenses" },
+        null,
+        "user-001"
+      );
+
+      const calledWith = createSpy.mock.calls[0][0];
+      expect(calledWith).not.toHaveProperty("note");
+    });
+
+    it("AI returns note: 'lunch at café' (no category name match) → transaction created with note field preserved", async () => {
+      mockChatCompletionsCreate.mockResolvedValue(
+        makeCompletionResponse([makeItem({ note: "lunch at café" })])
+      );
+      const createSpy = jest
+        .spyOn(service, "create")
+        .mockResolvedValue({} as TransactionDocument);
+
+      await service.autoCreate(
+        { ...baseDto, text: "lunch at café" },
+        null,
+        "user-001"
+      );
+
+      const calledWith = createSpy.mock.calls[0][0];
+      expect(calledWith).toHaveProperty("note", "lunch at café");
+    });
+  });
 });
