@@ -416,7 +416,7 @@ Rules:
 - type: "expense" for purchases/payments, "income" for salary/refunds/income
 - amount: the line item amount as an integer (no currency symbol, no decimals — round if needed), null if unclear
 - date: transaction date as YYYY-MM-DD, null if not found (all items may share the same receipt date)
-- note: short 1-line description of the specific line item
+- note: short 1-line description of the specific line item; set to null if the note text contains the matched category name (case-insensitive substring match — e.g. category "Food" and note "food" or "food expenses" → null)
 - categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
 - If the text/image explicitly indicates a meal time (e.g. "breakfast", "lunch", "dinner"), use that clue to select the category.
 - If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time above to choose:
