@@ -407,11 +407,7 @@ describe("TransactionsService.autoCreate", () => {
         .spyOn(service, "create")
         .mockResolvedValue({} as TransactionDocument);
 
-      await service.autoCreate(
-        { ...baseDto, text: "food" },
-        null,
-        "user-001"
-      );
+      await service.autoCreate({ ...baseDto, text: "food" }, null, "user-001");
 
       const calledWith = createSpy.mock.calls[0][0];
       expect(calledWith).not.toHaveProperty("note");
