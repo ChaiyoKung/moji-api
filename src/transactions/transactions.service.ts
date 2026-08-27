@@ -420,8 +420,8 @@ Rules:
 - categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
 - If the text/image explicitly indicates a meal time (e.g. "breakfast", "lunch", "dinner"), use that clue to select the category.
 - If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time above to choose:
-  - breakfast: 05:00-11:59
-  - lunch: 12:00-16:59
+  - breakfast: 05:00-10:59
+  - lunch: 11:00-16:59
   - dinner: 17:00-23:59
 - If the user's current local time is 00:00-04:59, avoid meal-based disambiguation and fall back to the closest non-meal clue.
 Quantity expansion rules:
