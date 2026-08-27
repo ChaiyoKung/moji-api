@@ -444,6 +444,12 @@ Quantity expansion rules:
 - If N = 1, emit exactly one entry (no expansion needed).
 - If total / N is not a whole number, round each entry to the nearest integer using standard rounding (0.5 rounds up).
 - Items with no quantity indicator are extracted as a single entry (existing behavior, unchanged).
+
+Discount handling rules:
+- If the receipt/text shows a discount, rebate, or promotion:
+  - When the discount is clearly tied to a specific line item (you are certain which item it applies to), apply it directly to that item: set that item's amount to (item price - discount) and keep type "expense". Do NOT emit a separate entry for the discount.
+  - When the discount cannot be attributed to a specific item (e.g. a store-wide/total discount, "save $X", or an unlabeled discount), emit a separate entry with type "income", amount = the discount amount (positive integer), a note like "discount", and categoryId = the best matching category whose type is "income".
+- Never use negative amounts; always either net the discount into its item (first case) or record it as positive income (second case).
 - Do NOT wrap output in markdown code fences or any other formatting`;
 
     const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
