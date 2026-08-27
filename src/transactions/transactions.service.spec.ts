@@ -391,8 +391,8 @@ describe("TransactionsService.autoCreate", () => {
 
     it("prompt includes all meal window rules", async () => {
       const systemPrompt = await getSystemPrompt();
-      expect(systemPrompt).toContain("breakfast: 05:00-11:59");
-      expect(systemPrompt).toContain("lunch: 12:00-16:59");
+      expect(systemPrompt).toContain("breakfast: 05:00-10:59");
+      expect(systemPrompt).toContain("lunch: 11:00-16:59");
       expect(systemPrompt).toContain("dinner: 17:00-23:59");
       expect(systemPrompt).toContain("00:00-04:59");
     });
