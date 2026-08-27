@@ -449,4 +449,38 @@ describe("TransactionsService.autoCreate", () => {
       expect(calledWith).toHaveProperty("note", "lunch at café");
     });
   });
+
+  describe("extractJsonFromContent", () => {
+    const extract = (content: string) =>
+      (
+        service as unknown as { extractJsonFromContent: (c: string) => unknown }
+      ).extractJsonFromContent(content);
+
+    it("parses bare JSON", () => {
+      expect(extract('{"items":[]}')).toEqual({ items: [] });
+    });
+
+    it("parses JSON wrapped in ```json fences", () => {
+      const content = '```json\n{"items":[]}\n```';
+      expect(extract(content)).toEqual({ items: [] });
+    });
+
+    it("parses JSON wrapped in plain ``` fences", () => {
+      const content = '```\n{"items":[]}\n```';
+      expect(extract(content)).toEqual({ items: [] });
+    });
+
+    it("parses fenced JSON with surrounding whitespace", () => {
+      const content = '\n  ```json\n{"items":[]}\n```\n';
+      expect(extract(content)).toEqual({ items: [] });
+    });
+
+    it("throws on invalid JSON", () => {
+      expect(() => extract("not json")).toThrow();
+    });
+
+    it("throws on empty string", () => {
+      expect(() => extract("")).toThrow();
+    });
+  });
 });

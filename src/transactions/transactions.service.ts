@@ -57,6 +57,18 @@ export class TransactionsService {
     private configService: ConfigService
   ) {}
 
+  private extractJsonFromContent(content: string): unknown {
+    const trimmed = content.trim();
+
+    // Strip markdown code fences (```json ... ``` or ``` ... ```)
+    const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+    if (fenced) {
+      return JSON.parse(fenced[1].trim());
+    }
+
+    return JSON.parse(trimmed);
+  }
+
   private async insertTransactionWithBalanceUpdate(
     dto: CreateTransactionDto,
     session: mongoose.ClientSession
@@ -481,7 +493,7 @@ Quantity expansion rules:
     }
 
     const parseResult = aiResponseSchema.safeParse(
-      JSON.parse(response.choices[0].message.content)
+      this.extractJsonFromContent(response.choices[0].message.content)
     );
     if (!parseResult.success) {
       throw new UnprocessableEntityException(
