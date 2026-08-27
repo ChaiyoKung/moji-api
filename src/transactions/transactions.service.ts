@@ -57,6 +57,18 @@ export class TransactionsService {
     private configService: ConfigService
   ) {}
 
+  private extractJsonFromContent(content: string): unknown {
+    const trimmed = content.trim();
+
+    // Strip markdown code fences (```json ... ``` or ``` ... ```)
+    const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+    if (fenced) {
+      return JSON.parse(fenced[1].trim());
+    }
+
+    return JSON.parse(trimmed);
+  }
+
   private async insertTransactionWithBalanceUpdate(
     dto: CreateTransactionDto,
     session: mongoose.ClientSession
@@ -420,8 +432,8 @@ Rules:
 - categoryId: the _id value of the best matching category from the list above (REQUIRED — must be one of the provided _id values)
 - If the text/image explicitly indicates a meal time (e.g. "breakfast", "lunch", "dinner"), use that clue to select the category.
 - If the text/image is ambiguous and the relevant categories differ only by meal period, use the user's current local time above to choose:
-  - breakfast: 05:00-11:59
-  - lunch: 12:00-16:59
+  - breakfast: 05:00-10:59
+  - lunch: 11:00-16:59
   - dinner: 17:00-23:59
 - If the user's current local time is 00:00-04:59, avoid meal-based disambiguation and fall back to the closest non-meal clue.
 Quantity expansion rules:
@@ -432,6 +444,12 @@ Quantity expansion rules:
 - If N = 1, emit exactly one entry (no expansion needed).
 - If total / N is not a whole number, round each entry to the nearest integer using standard rounding (0.5 rounds up).
 - Items with no quantity indicator are extracted as a single entry (existing behavior, unchanged).
+
+Discount handling rules:
+- If the receipt/text shows a discount, rebate, or promotion:
+  - When the discount is clearly tied to a specific line item (you are certain which item it applies to), apply it directly to that item: set that item's amount to (item price - discount) and keep type "expense". Do NOT emit a separate entry for the discount.
+  - When the discount cannot be attributed to a specific item (e.g. a store-wide/total discount, "save $X", or an unlabeled discount), emit a separate entry with type "income", amount = the discount amount (positive integer), a note like "discount", and categoryId = the best matching category whose type is "income".
+- Never use negative amounts; always either net the discount into its item (first case) or record it as positive income (second case).
 - Do NOT wrap output in markdown code fences or any other formatting`;
 
     const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
@@ -481,7 +499,7 @@ Quantity expansion rules:
     }
 
     const parseResult = aiResponseSchema.safeParse(
-      JSON.parse(response.choices[0].message.content)
+      this.extractJsonFromContent(response.choices[0].message.content)
     );
     if (!parseResult.success) {
       throw new UnprocessableEntityException(
