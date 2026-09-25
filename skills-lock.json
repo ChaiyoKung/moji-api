@@ -25,6 +25,12 @@
       "skillPath": "skills/setup/chief-install/SKILL.md",
       "computedHash": "ada2a95dfb24cd9111c2da778a59c7ef7178b6bbf55ad214b332cca61a0a3f58"
     },
+    "chief-loop": {
+      "source": "thaitype/chief",
+      "sourceType": "github",
+      "skillPath": "skills/chief/chief-loop/SKILL.md",
+      "computedHash": "ed479928ddb451a632c8a4b8eb6e4aed13d44793acbe04fa934ad2bcf590d2d8"
+    },
     "chief-plan": {
       "source": "thaitype/chief",
       "sourceType": "github",
@@ -60,6 +66,18 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/grill-design/SKILL.md",
       "computedHash": "0c2aeec794004113d61239128044d285e0f62902f7754f750272a2bf8f11d39c"
+    },
+    "loop-preflight": {
+      "source": "thaitype/chief",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/loop-preflight/SKILL.md",
+      "computedHash": "d2855afdec725b5ef541d2fb5f28ebd46254f5cba12c05348acbef1423f105e2"
+    },
+    "loop-readiness": {
+      "source": "thaitype/chief",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/loop-readiness/SKILL.md",
+      "computedHash": "83d5831f7655d650d07d16e00a77bfadc8458c5db9be8c73d65f6172bf72dab4"
     },
     "shape-up": {
       "source": "thaitype/chief",
