@@ -9,6 +9,7 @@ overrides:
   form-data@<4.0.6: ^4.0.6
   piscina@<4.9.4: ^4.9.4
   proxy-addr@<2.0.8: ^2.0.8
+  basic-ftp@<6.2.4: ^6.2.6
 
 importers:
 
@@ -1729,10 +1730,9 @@ packages:
     resolution: {integrity: sha512-8QdH6czo+G7uBsNo0GiUfouPN1lRzKdJTGnKXwe12gkFbnnOUaUKGN55dMkfy+mnxmvjwl9zcI4VncczcVXDhA==}
     hasBin: true
 
-  basic-ftp@5.0.5:
-    resolution: {integrity: sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==}
+  basic-ftp@6.2.6:
+    resolution: {integrity: sha512-0EjZCaodOz6yiokv2JA1VyKGNdGxULZ+GGlPgG9tm4d+T/bHtX1hUch8CumDneBfpIbiSdn7TaCGwpM+gwsOlw==}
     engines: {node: '>=10.0.0'}
-    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   bcrypt@6.0.0:
     resolution: {integrity: sha512-cU8v/EGSrnH+HnxV2z0J7/blxH8gq7Xh2JFT6Aroax7UohdmiJJlxApMxtKfuI7z68NvvVcmR78k2LbT6efhRg==}
@@ -6134,7 +6134,7 @@ snapshots:
 
   baseline-browser-mapping@2.9.3: {}
 
-  basic-ftp@5.0.5: {}
+  basic-ftp@6.2.6: {}
 
   bcrypt@6.0.0:
     dependencies:
@@ -6968,7 +6968,7 @@ snapshots:
 
   get-uri@6.0.5(supports-color@8.1.1):
     dependencies:
-      basic-ftp: 5.0.5
+      basic-ftp: 6.2.6
       data-uri-to-buffer: 6.0.2
       debug: 4.4.1(supports-color@8.1.1)
     transitivePeerDependencies:
