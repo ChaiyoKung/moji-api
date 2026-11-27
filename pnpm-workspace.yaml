@@ -2,3 +2,5 @@ allowBuilds:
   '@nestjs/core': true
   '@swc/core': true
   bcrypt: true
+overrides:
+  '@xhmikosr/decompress@<10.2.2': '^10.2.2'
