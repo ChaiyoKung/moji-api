@@ -17,3 +17,5 @@ overrides:
   'path-to-regexp@<8.4.2': '^8.4.2'
   'body-parser@<2.4.0': '^2.4.0'
   'undici@<6.29.1': '^6.29.1'
+  'brace-expansion@>=1.0.0 <1.1.22': '^1.1.22'
+  'brace-expansion@>=2.0.0 <2.1.8': '^2.1.8'
