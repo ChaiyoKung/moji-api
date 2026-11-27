@@ -89,7 +89,7 @@ importers:
         version: 2.5.0
       openai:
         specifier: ^6.44.0
-        version: 6.44.0(zod@3.25.67)
+        version: 6.44.0(zod@4.6.7)
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -106,8 +106,8 @@ importers:
         specifier: ^7.8.1
         version: 7.8.2
       zod:
-        specifier: ^3.25.67
-        version: 3.25.67
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.3
@@ -4386,8 +4386,8 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
-  zod@3.25.67:
-    resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -8052,9 +8052,9 @@ snapshots:
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0
 
-  openai@6.44.0(zod@3.25.67):
+  openai@6.44.0(zod@4.6.7):
     optionalDependencies:
-      zod: 3.25.67
+      zod: 4.6.7
 
   optionator@0.9.4:
     dependencies:
@@ -9019,4 +9019,4 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  zod@3.25.67: {}
+  zod@4.6.7: {}

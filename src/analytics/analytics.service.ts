@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose, { Model } from "mongoose";
 import { Transaction } from "../transactions/schemas/transaction.schema";
-import { z } from "zod/v4";
+import { z } from "zod";
 import dayjs from "dayjs";
 
 @Injectable()
