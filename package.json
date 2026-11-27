@@ -5,6 +5,9 @@
   "author": "ChaiyoKung (https://github.com/ChaiyoKung)",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -58,7 +61,7 @@
     "@types/jest": "^29.5.14",
     "@types/ms": "^2.1.0",
     "@types/multer": "^2.1.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
