@@ -15,6 +15,7 @@ overrides:
   flatted@<3.4.4: ^3.4.4
   browserslist@<4.29.6: ^4.29.6
   fast-uri@<3.1.9: ^3.1.9
+  ip-address@<10.7.6: ^10.7.6
 
 importers:
 
@@ -2695,8 +2696,8 @@ packages:
   inspect-with-kind@1.0.5:
     resolution: {integrity: sha512-MAQUJuIo7Xqk8EVNP+6d3CKq9c80hi4tjIbIAT6lmGW9W6WzlHiu9PS8uSuUYU+Do+j1baiFp3H25XEVxDIG2g==}
 
-  ip-address@10.0.1:
-    resolution: {integrity: sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA==}
+  ip-address@10.7.6:
+    resolution: {integrity: sha512-00LYkM6byILa9eQIx6qoaXCM40xTLd56AZ4vyaPW3YTyb49VZYPo5xsiAq4tuQ54GH4R7gVdYScJ1B7B77PuTg==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -7171,7 +7172,7 @@ snapshots:
     dependencies:
       kind-of: 6.0.3
 
-  ip-address@10.0.1: {}
+  ip-address@10.7.6: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -8481,7 +8482,7 @@ snapshots:
 
   socks@2.8.7:
     dependencies:
-      ip-address: 10.0.1
+      ip-address: 10.7.6
       smart-buffer: 4.2.0
 
   sort-keys-length@1.0.1:
