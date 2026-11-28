@@ -23,7 +23,7 @@ import { CategoryDocument } from "../categories/schemas/category.schema";
 import { CategoriesService } from "../categories/categories.service";
 import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";
-import { z } from "zod/v4";
+import { z } from "zod";
 import dayjs from "dayjs";
 
 const aiItemSchema = z.object({
